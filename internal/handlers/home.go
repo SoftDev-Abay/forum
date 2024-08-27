@@ -7,7 +7,7 @@ import (
 
 func (router *Router) home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		router.notFound(w, r)
 		return
 	}
 	// Include the navigation partial in the template files.
@@ -18,13 +18,11 @@ func (router *Router) home(w http.ResponseWriter, r *http.Request) {
 	}
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		router.app.InfoLog.Println(err.Error())
-		http.Error(w, "Internal Server Error", 500)
+		router.serverError(w, err)
 		return
 	}
 	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		router.app.ErrorLog.Println(err.Error())
-		http.Error(w, "Internal Server Error", 500)
+		router.serverError(w, err)
 	}
 }
