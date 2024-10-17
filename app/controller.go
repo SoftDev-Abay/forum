@@ -1,18 +1,16 @@
 package app
 
 import (
-	"log"
+	"log/slog"
 )
 
 type Application struct {
-	ErrorLog *log.Logger
-	InfoLog  *log.Logger
+	Logger *slog.Logger
 }
 
-func NewApp(errorLog *log.Logger, infoLog *log.Logger) *Application {
+func NewApp(logger *slog.Logger) *Application {
 	app := &Application{
-		ErrorLog: errorLog,
-		InfoLog:  infoLog,
+		Logger: logger,
 	}
 
 	return app

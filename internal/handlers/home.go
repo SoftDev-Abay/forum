@@ -18,11 +18,11 @@ func (router *Router) home(w http.ResponseWriter, r *http.Request) {
 	}
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		router.serverError(w, err)
+		router.serverError(w, r, err)
 		return
 	}
 	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		router.serverError(w, err)
+		router.serverError(w, r, err)
 	}
 }

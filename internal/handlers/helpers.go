@@ -1,16 +1,18 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
-	"runtime/debug"
 )
 
 // The serverError helper writes an error message and stack trace to the errorLog,
 // then sends a generic 500 Internal Server Error response to the user.
-func (router *Router) serverError(w http.ResponseWriter, err error) {
-	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	router.app.ErrorLog.Output(2, trace)
+func (router *Router) serverError(w http.ResponseWriter, r *http.Request, err error) {
+	var (
+		method = r.Method
+		uri    = r.URL.RequestURI()
+	)
+
+	router.app.Logger.Error(err.Error(), "method", method, "uri", uri)
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 

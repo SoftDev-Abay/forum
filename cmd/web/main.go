@@ -2,31 +2,32 @@ package main
 
 import (
 	"flag"
-	"forum/app"
-	"forum/internal/handlers"
-	"log"
+	"game-forum-abaliyev-ashirbay/app"
+	"game-forum-abaliyev-ashirbay/internal/handlers"
+	"log/slog"
 	"net/http"
-
-	"os" // New import
+	"os"
+	// New import
 )
 
 func main() {
 	addr := flag.String("addr", ":4000", "HTTP network address")
 	flag.Parse()
-	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	app := app.NewApp(errorLog, infoLog)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	app := app.NewApp(logger)
 
 	router := handlers.NewRouter(app)
 
 	srv := &http.Server{
 		Addr:     *addr,
-		ErrorLog: errorLog,
+		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		Handler:  router.Routes(),
 	}
-	infoLog.Printf("Starting server on %s", *addr)
-	// Call the ListenAndServe() method on our new http.Server struct.
+	
+	logger.Info("Starting server on %s", *addr)
+
 	err := srv.ListenAndServe()
-	errorLog.Fatal(err)
+	logger.Error(err.Error())
 }

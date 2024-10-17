@@ -4,31 +4,28 @@
 -- Create table for Users
 CREATE TABLE Users (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    username VARCHAR(100) NOT NULL,
-    password VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
     enabled BOOLEAN NOT NULL
 );
 
 -- Create table for Categories
 CREATE TABLE Categories (
-    name VARCHAR(100) NOT NULL PRIMARY KEY,
-    description TEXT
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(100) NOT NULL UNIQUE,
 );
 
 -- Create table for Posts
-CREATE TABLE Post (
+CREATE TABLE Posts (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     title VARCHAR(255) NOT NULL,
-    desc TEXT NOT NULL,
+    content TEXT NOT NULL,
     imgUrl TEXT,
     createdAt DATETIME NOT NULL,
-    category VARCHAR(100) NOT NULL,
+    category_id INTEGER NOT NULL,
     owner_id INTEGER NOT NULL,
-    like_count INTEGER DEFAULT 0,
-    dislike_count INTEGER DEFAULT 0,
-    comment_count INTEGER DEFAULT 0,
-    FOREIGN KEY (category) REFERENCES Categories(name),
+    FOREIGN KEY (category_id) REFERENCES Categories(id),
     FOREIGN KEY (owner_id) REFERENCES Users(id)
 );
 
@@ -38,9 +35,7 @@ CREATE TABLE Comments (
     post_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     text TEXT NOT NULL,
-    like_count INTEGER DEFAULT 0,
-    dislike_count INTEGER DEFAULT 0,
-    FOREIGN KEY (post_id) REFERENCES Post(id),
+    FOREIGN KEY (post_id) REFERENCES Posts(id),
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 
@@ -49,16 +44,17 @@ CREATE TABLE Post_Reactions (
     type TEXT CHECK(type IN ('like', 'dislike')) NOT NULL,
     user_id INTEGER NOT NULL,
     post_id INTEGER NOT NULL,
+    PRIMARY KEY (user_id, post_id),
     FOREIGN KEY (user_id) REFERENCES Users(id),
     FOREIGN KEY (post_id) REFERENCES Post(id)
 );
 
 -- Create table for Comment Reactions (use TEXT for reaction type)
 CREATE TABLE Comment_Reactions (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     type TEXT CHECK(type IN ('like', 'dislike')) NOT NULL,
     user_id INTEGER NOT NULL,
     comment_id INTEGER NOT NULL,
+    PRIMARY KEY (user_id, comment_id),
     FOREIGN KEY (user_id) REFERENCES Users(id),
     FOREIGN KEY (comment_id) REFERENCES Comments(id)
 );
@@ -66,8 +62,8 @@ CREATE TABLE Comment_Reactions (
 -- Create table for Sessions
 CREATE TABLE Sessions (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    token TEXT NOT NULL,
-    user_id INTEGER NOT NULL,
+    token TEXT NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL UNIQUE,
     createdAt DATETIME NOT NULL,
     expiresAt DATETIME NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(id)
