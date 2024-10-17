@@ -13,7 +13,7 @@ CREATE TABLE Users (
 -- Create table for Categories
 CREATE TABLE Categories (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    name VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL UNIQUE
 );
 
 -- Create table for Posts
