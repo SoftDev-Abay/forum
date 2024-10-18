@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"game-forum-abaliyev-ashirbay/internal/handlers"
 	"log/slog"
 	"net/http"
@@ -15,6 +16,7 @@ func main() {
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	templateCache, err := handlers.NewTemplateCache()
+	fmt.Println(templateCache)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)

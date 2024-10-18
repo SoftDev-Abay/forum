@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"game-forum-abaliyev-ashirbay/ui"
 	"html/template"
 	"io/fs"
@@ -8,7 +9,6 @@ import (
 )
 
 type templateData struct {
-
 }
 
 var functions = template.FuncMap{}
@@ -17,6 +17,9 @@ func NewTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 
 	pages, err := fs.Glob(ui.Files, "html/pages/*.html")
+
+	fmt.Println(pages)
+
 	if err != nil {
 		return nil, err
 	}
