@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"html/template" // New import
+	"html/template"
 	"net/http"
 )
 
-func (router *Router) home(w http.ResponseWriter, r *http.Request) {
+func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		router.notFound(w, r)
+		app.notFound(w, r)
 		return
 	}
 	// Include the navigation partial in the template files.
@@ -18,11 +18,11 @@ func (router *Router) home(w http.ResponseWriter, r *http.Request) {
 	}
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		router.serverError(w, r, err)
+		app.serverError(w, r, err)
 		return
 	}
 	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		router.serverError(w, r, err)
+		app.serverError(w, r, err)
 	}
 }

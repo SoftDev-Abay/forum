@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"game-forum-abaliyev-ashirbay/app"
 	"game-forum-abaliyev-ashirbay/internal/handlers"
 	"log/slog"
 	"net/http"
@@ -15,19 +14,22 @@ func main() {
 	flag.Parse()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	templateCache, err := handlers.NewTemplateCache()
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
 
-	app := app.NewApp(logger)
-
-	router := handlers.NewRouter(app)
+	app := handlers.NewApp(logger, templateCache)
 
 	srv := &http.Server{
 		Addr:     *addr,
 		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),
-		Handler:  router.Routes(),
+		Handler:  app.Routes(),
 	}
-	
+
 	logger.Info("Starting server on %s", *addr)
 
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	logger.Error(err.Error())
 }
