@@ -1,14 +1,12 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
+	"unicode/utf8"
 )
 
-// Define a snippetCreateForm struct to represent the form data and validation
-// errors for the form fields. Note that all the struct fields are deliberately
-// exported (i.e. start with a capital letter). This is because struct fields
-// must be exported in order to be read by the html/template package when
-// rendering the template.
 type registerForm struct {
 	Email           string
 	Username        string
@@ -17,19 +15,15 @@ type registerForm struct {
 	FieldErrors     map[string]string
 }
 
-func (app *application) register(w http.ResponseWriter, r *http.Request) {
-	data := app.newTemplateData(r)
-	// Initialize a new createSnippetForm instance and pass it to the template.
-	// Notice how this is also a great opportunity to set any default or
-	// 'initial' values for the form --- here we set the initial value for the
-	// snippet expiry to 365 days.
-	data.Form = registerForm{
-		Expires: 365,
-	}
-	app.render(w, http.StatusOK, "register.html", data)
+func (app *Application) register(w http.ResponseWriter, r *http.Request) {
+	data := templateData{}
+
+	data.Form = registerForm{}
+
+	app.render(w, r, http.StatusOK, "register.html", data)
 }
 
-func (app *application) registerPost(w http.ResponseWriter, r *http.Request) {
+func (app *Application) registerPost(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
@@ -37,13 +31,13 @@ func (app *application) registerPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := registerForm{
-		Email:       r.PostForm.Get("email"),
-		Username:    r.PostForm.Get("username"),
-		Password:    r.PostForm.Get("password4"),
-		FieldErrors: map[string]string{},
+		Email:           r.PostForm.Get("email"),
+		Username:        r.PostForm.Get("username"),
+		Password:        r.PostForm.Get("password"),
+		ConfirmPassword: r.PostForm.Get("confirmPassword"),
+		FieldErrors:     map[string]string{},
 	}
-	// Update the validation checks so that they operate on the snippetCreateForm
-	// instance.
+
 	if strings.TrimSpace(form.Email) == "" {
 		form.FieldErrors["email"] = "This field cannot be blank"
 	} else if utf8.RuneCountInString(form.Email) > 50 {
@@ -65,25 +59,24 @@ func (app *application) registerPost(w http.ResponseWriter, r *http.Request) {
 		form.FieldErrors["confirmPassword"] = "Cofirm password has to be the same"
 	}
 
-	// If there are any validation errors re-display the create.html template,
-	// passing in the snippetCreateForm instance as dynamic data in the Form
-	// field. Note that we use the HTTP status code 422 Unprocessable Entity
-	// when sending the response to indicate that there was a validation error.
 	if len(form.FieldErrors) > 0 {
-		data := app.newTemplateData(r)
+		data := templateData{}
 		data.Form = form
-		app.render(w, http.StatusUnprocessableEntity, "register.html", data)
+		app.render(w, r, http.StatusUnprocessableEntity, "register.html", data)
 		return
 	}
 
-	hashedPassword := app.GenerateHashPassword(form.Password)
-
-	// We also need to update this line to pass the data from the
-	// snippetCreateForm instance to our Insert() method.
-	id, err := app.users.Insert(form.Email, form.Username, hashedPassword)
+	hashedPassword, err := app.generateHashPassword(form.Password)
 	if err != nil {
-		app.serverError(w, err)
+		app.serverError(w, r, err)
 		return
 	}
-	http.Redirect(w, r, fmt.Sprintf("/home"), http.StatusSeeOther)
+
+	_, err = app.Users.Insert(form.Email, form.Username, hashedPassword, false)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/"), http.StatusSeeOther)
 }

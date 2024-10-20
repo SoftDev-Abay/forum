@@ -5,13 +5,15 @@ import (
 	"database/sql"
 	"flag"
 	"game-forum-abaliyev-ashirbay/internal/handlers"
-	_ "github.com/mattn/go-sqlite3"
+	"game-forum-abaliyev-ashirbay/internal/models"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 	// New import
 )
 
@@ -39,7 +41,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	app := handlers.NewApp(logger, templateCache, db)
+	users := &models.UserModel{DB: db}
+	session := &models.SessionModel{DB: db}
+
+	app := handlers.NewApp(logger, templateCache, users, session)
 
 	srv := &http.Server{
 		Addr:     *addr,

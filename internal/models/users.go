@@ -1,5 +1,17 @@
 package models
 
+import (
+	"database/sql"
+	"errors"
+)
+
+type UserModelInterface interface {
+	GetById(id int) (*User, error)
+	GetAll() ([]*User, error)
+	Insert(email string, username string, password string, enabled bool) (int, error)
+	GetByUsernameOrEmail(column string) (*User, error)
+}
+
 type User struct {
 	ID       uint
 	Username string
@@ -8,38 +20,36 @@ type User struct {
 	Enabled  bool
 }
 
-
-// Define a UserModel type which wraps a sql.DB connection pool.
 type UserModel struct {
 	DB *sql.DB
 }
 
-func (m *UserModel) Get(id int) (*User, error) {
-	// Write the SQL statement we want to execute. Again, I've split it over two
-	// lines for readability.
-	// stmt := `SELECT id, title, content, created, expires FROM Users
-	// WHERE expires > datetime('now') AND id = ?`
+func (m *UserModel) GetByUsernameOrEmail(column string) (*User, error) {
+	stmt := `SELECT id, email, username, password, enabled FROM users
+	WHERE username = ? OR email = ?`
 
+	u := &User{}
+
+	err := m.DB.QueryRow(stmt, column, column).Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Enabled)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+	// If everything went OK then return the Snippet object.
+	return u, nil
+}
+
+func (m *UserModel) GetById(id int) (*User, error) {
 	stmt := `SELECT id, email, username, password, enabled FROM users
 	WHERE id = ?`
 
-	// Use the QueryRow() method on the connection pool to execute our
-	// SQL statement, passing in the untrusted id variable as the value for the
-	// placeholder parameter. This returns a pointer to a sql.Row object which
-	// holds the result from the database.
-	// Initialize a pointer to a new zeroed User struct.
 	u := &User{}
-	// Use row.Scan() to copy the values from each field in sql.Row to the
-	// corresponding field in the User struct. Notice that the arguments
-	// to row.Scan are *pointers* to the place you want to copy the data into,
-	// and the number of arguments must be exactly the same as the number of
-	// columns returned by your statement.
-	err := m.DB.QueryRow(stmt, id).Scan(&s.ID, &s.Email, &s.Username, &s.Password, &s.Enabled)
+
+	err := m.DB.QueryRow(stmt, id).Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Enabled)
 	if err != nil {
-		// If the query returns no rows, then row.Scan() will return a
-		// sql.ErrNoRows error. We use the errors.Is() function check for that
-		// error specifically, and return our own ErrNoRecord error
-		// instead (we'll create this in a moment).
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
 		} else {
@@ -76,20 +86,20 @@ func (m *UserModel) GetAll() ([]*User, error) {
 	// rows.Scan() method. If iteration over all the rows completes then the
 	// resultset automatically closes itself and frees-up the underlying
 	// database connection.
-	for rows.Next() {ID
+	for rows.Next() {
 		// Create a pointer to a new zeroed User struct.
-		s := &User{}
+		u := &User{}
 		// Use rows.Scan() to copy the values from each field in the row to the
 		// new User object that we created. Again, the arguments to row.Scan()
 		// must be pointers to the place you want to copy the data into, and the
 		// number of arguments must be exactly the same as the number of
 		// columns returned by your statement.
-		err = rows.Scan(&s.ID, &s.Email, &s.Username, &s.Password, &s.Enabled)
+		err = rows.Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Enabled)
 		if err != nil {
 			return nil, err
 		}
 		// Append it to the slice of users.
-		users = append(users, s)
+		users = append(users, u)
 	}
 	// When the rows.Next() loop has finished we call rows.Err() to retrieve any
 	// error that was encountered during the iteration. It's important to
@@ -102,9 +112,7 @@ func (m *UserModel) GetAll() ([]*User, error) {
 	return users, nil
 }
 
-
-
-func (m *UserModel) Insert(email string, username string, password int, enabled bool) (int, error) {
+func (m *UserModel) Insert(email string, username string, password string, enabled bool) (int, error) {
 	// Write the SQL statement we want to execute. I've split it over two lines
 	// for readability (which is why it's surrounded with backquotes instead
 	// of normal double quotes).

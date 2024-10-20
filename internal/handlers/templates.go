@@ -8,6 +8,7 @@ import (
 )
 
 type templateData struct {
+	Form interface{}
 }
 
 var functions = template.FuncMap{}
