@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -12,7 +11,10 @@ func (app Application) postView(w http.ResponseWriter, r *http.Request) {
 		app.notFound(w, r)
 		return
 	}
-	fmt.Fprintf(w, "Display a specific post with ID %d...", id)
+
+	var data templateData
+
+	app.render(w, r, http.StatusOK, "create.html", data)
 }
 
 func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
@@ -21,5 +23,5 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 		app.clientError(w, http.StatusMethodNotAllowed) // Use the clientError() helper.
 		return
 	}
-	w.Write([]byte("Create a new post..."))
+
 }
