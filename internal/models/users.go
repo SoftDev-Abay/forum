@@ -1,7 +1,7 @@
 package models
 
 type User struct {
-	Id       uint
+	ID       uint
 	Username string
 	Password string
 	Email    string
@@ -28,7 +28,7 @@ func (m *UserModel) Get(id int) (*User, error) {
 	// placeholder parameter. This returns a pointer to a sql.Row object which
 	// holds the result from the database.
 	// Initialize a pointer to a new zeroed User struct.
-	s := &User{}
+	u := &User{}
 	// Use row.Scan() to copy the values from each field in sql.Row to the
 	// corresponding field in the User struct. Notice that the arguments
 	// to row.Scan are *pointers* to the place you want to copy the data into,
@@ -47,7 +47,7 @@ func (m *UserModel) Get(id int) (*User, error) {
 		}
 	}
 	// If everything went OK then return the Snippet object.
-	return s, nil
+	return u, nil
 }
 
 func (m *UserModel) GetAll() ([]*User, error) {
@@ -76,7 +76,7 @@ func (m *UserModel) GetAll() ([]*User, error) {
 	// rows.Scan() method. If iteration over all the rows completes then the
 	// resultset automatically closes itself and frees-up the underlying
 	// database connection.
-	for rows.Next() {
+	for rows.Next() {ID
 		// Create a pointer to a new zeroed User struct.
 		s := &User{}
 		// Use rows.Scan() to copy the values from each field in the row to the
@@ -109,7 +109,7 @@ func (m *UserModel) Insert(email string, username string, password int, enabled 
 	// for readability (which is why it's surrounded with backquotes instead
 	// of normal double quotes).
 
-	stmt := `INSERT INTO users (id, email, username, password, enabled)
+	stmt := `INSERT INTO users (email, username, password, enabled)
 	VALUES(?, ?, ?, ?)`
 	// Use the Exec() method on the embedded connection pool to execute the
 	// statement. The first parameter is the SQL statement, followed by the
@@ -117,7 +117,7 @@ func (m *UserModel) Insert(email string, username string, password int, enabled 
 	// method returns a sql.Result type, which contains some basic
 	// information about what happened when the statement was executed.
 
-	result, err := m.DB.Exec(stmt, id, email, username, password, enabled) // db.Exec is first creating a prepared statement
+	result, err := m.DB.Exec(stmt, email, username, password, enabled) // db.Exec is first creating a prepared statement
 	// which is bascially sql query compiled but without paramentrs,
 	//  this way parameters are treared as pure data, thus they cant change the intent of the request
 	// this is better than just putting paraments into the sql string

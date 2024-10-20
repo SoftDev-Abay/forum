@@ -10,11 +10,11 @@ import (
 // must be exported in order to be read by the html/template package when
 // rendering the template.
 type registerForm struct {
-	Email       string
-	Username    string
-	Password    string
-	ConfirmPassword    string
-	FieldErrors map[string]string
+	Email           string
+	Username        string
+	Password        string
+	ConfirmPassword string
+	FieldErrors     map[string]string
 }
 
 func (app *application) register(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +65,6 @@ func (app *application) registerPost(w http.ResponseWriter, r *http.Request) {
 		form.FieldErrors["confirmPassword"] = "Cofirm password has to be the same"
 	}
 
-
 	// If there are any validation errors re-display the create.html template,
 	// passing in the snippetCreateForm instance as dynamic data in the Form
 	// field. Note that we use the HTTP status code 422 Unprocessable Entity
@@ -76,9 +75,12 @@ func (app *application) registerPost(w http.ResponseWriter, r *http.Request) {
 		app.render(w, http.StatusUnprocessableEntity, "register.html", data)
 		return
 	}
+
+	hashedPassword := app.GenerateHashPassword(form.Password)
+
 	// We also need to update this line to pass the data from the
 	// snippetCreateForm instance to our Insert() method.
-	id, err := app.users.Insert(form.Title, form.Content, form.Expires)
+	id, err := app.users.Insert(form.Email, form.Username, hashedPassword)
 	if err != nil {
 		app.serverError(w, err)
 		return
