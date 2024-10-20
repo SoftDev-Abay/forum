@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"game-forum-abaliyev-ashirbay/internal/handlers"
+	"game-forum-abaliyev-ashirbay/internal/models"
 	_ "github.com/mattn/go-sqlite3"
 	"log/slog"
 	"net/http"
@@ -12,7 +13,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	// New import
 )
 
 func main() {
@@ -39,7 +39,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	app := handlers.NewApp(logger, templateCache, db)
+	categoriesModel := &models.CategoriesModel{DB: db}
+	postsModel := &models.PostModel{DB: db}
+	app := handlers.NewApp(logger, templateCache, categoriesModel, postsModel)
 
 	srv := &http.Server{
 		Addr:     *addr,
