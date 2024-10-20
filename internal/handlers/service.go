@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"database/sql"
+	"game-forum-abaliyev-ashirbay/internal/models"
 	"html/template"
 	"log/slog"
 )
@@ -9,14 +9,16 @@ import (
 type Application struct {
 	Logger        *slog.Logger
 	TemplateCache map[string]*template.Template
-	db            *sql.DB
+	Categories    models.CategoriesModelInterface
+	Posts         models.PostsModelInterface
 }
 
-func NewApp(logger *slog.Logger, teamplateCache map[string]*template.Template, db *sql.DB) *Application {
+func NewApp(logger *slog.Logger, teamplateCache map[string]*template.Template, categories *models.CategoriesModel, posts *models.PostModel) *Application {
 	app := &Application{
 		Logger:        logger,
 		TemplateCache: teamplateCache,
-		db:            db,
+		Categories:    categories,
+		Posts:         posts,
 	}
 
 	return app
