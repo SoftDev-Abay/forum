@@ -1,0 +1,49 @@
+{{define "title"}}Create an account get full access{{end}}
+{{define "main"}}
+<form action='/register/post' method='POST'>
+<div>
+<label>Email:</label>
+<!-- Use the `with` action to render the value of .Form.FieldErrors.title
+if it is not empty. -->
+{{with .Form.FieldErrors.email}}
+<label class='error'>{{.}}</label>
+{{end}}
+<!-- Re-populate the title data by setting the `value` attribute. -->
+<input type='text' name='email' value='{{.Form.Email}}'>
+</div>
+<div>
+<label>Username:</label>
+<!-- Use the `with` action to render the value of .Form.FieldErrors.title
+if it is not empty. -->
+{{with .Form.FieldErrors.Username}}
+<label class='error'>{{.}}</label>
+{{end}}
+<!-- Re-populate the title data by setting the `value` attribute. -->
+<input type='text' name='username' value='{{.Form.Username}}'>
+</div>
+<div>
+<label>Password:</label>
+<!-- Use the `with` action to render the value of .Form.FieldErrors.title
+if it is not empty. -->
+{{with .Form.FieldErrors.Password}}
+<label class='error'>{{.}}</label>
+{{end}}
+<!-- Re-populate the title data by setting the `value` attribute. -->
+<input type='text' name='password' value='{{.Form.Password}}'>
+</div>
+<div>
+<label>Confirm Password:</label>
+<!-- Use the `with` action to render the value of .Form.FieldErrors.title
+if it is not empty. -->
+{{with .Form.FieldErrors.ConfirmPassword}}
+<label class='error'>{{.}}</label>
+{{end}}
+<!-- Re-populate the title data by setting the `value` attribute. -->
+<input type='text' name='confirmPassword' value='{{.Form.ConfirmPassword}}'>
+</div>
+
+<div>
+<input type='submit' value='Create account'>
+</div>
+</form>
+{{end}}

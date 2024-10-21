@@ -13,6 +13,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
@@ -38,11 +40,14 @@ func main() {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
-
-	categoriesModel := &models.CategoriesModel{DB: db}
+  
+  users := &models.UserModel{DB: db}
+	session := &models.SessionModel{DB: db}
+  categoriesModel := &models.CategoriesModel{DB: db}
 	postsModel := &models.PostModel{DB: db}
-	app := handlers.NewApp(logger, templateCache, categoriesModel, postsModel)
-
+  
+  app := handlers.NewApp(logger, templateCache, categoriesModel, postsModel, users, session)
+  
 	srv := &http.Server{
 		Addr:     *addr,
 		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),

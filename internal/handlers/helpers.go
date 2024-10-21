@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (app *Application) serverError(w http.ResponseWriter, r *http.Request, err error) {
@@ -43,4 +45,15 @@ func (app *Application) render(w http.ResponseWriter, r *http.Request, status in
 	w.WriteHeader(status)
 
 	buf.WriteTo(w)
+}
+
+func (app *Application) generateHashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	fmt.Println("errorka tut")
+	return string(bytes), err
+}
+
+func (app *Application) compareHashPassword(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type templateData struct {
-	Form       interface{}
+  Form interface{}
 	FormErrors map[string]string
 	Categories []*models.Categories
 }
