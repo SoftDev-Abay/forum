@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"game-forum-abaliyev-ashirbay/internal/models"
 	"game-forum-abaliyev-ashirbay/ui"
 	"html/template"
 	"io/fs"
@@ -8,7 +9,9 @@ import (
 )
 
 type templateData struct {
-	Form interface{}
+  Form interface{}
+	FormErrors map[string]string
+	Categories []*models.Categories
 }
 
 var functions = template.FuncMap{}

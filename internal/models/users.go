@@ -12,7 +12,7 @@ type UserModelInterface interface {
 	GetByUsernameOrEmail(column string) (*User, error)
 }
 
-type User struct {
+type Users struct {
 	ID       uint
 	Username string
 	Password string
