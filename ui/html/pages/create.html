@@ -11,9 +11,9 @@
         <label for="category">Category:</label><br>
         <select id="category" name="category_id" required>
             <option value="">Select a category</option>
-<!--            range .Categories-->
-<!--                <option value=".ID">.Name</option>-->
-<!--            end-->
+                {{range .Categories}}
+                    <option value="{{.ID}}">{{.Name}}</option>
+                {{end}}
         </select><br><br>
     </div>
 

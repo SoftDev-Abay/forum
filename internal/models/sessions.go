@@ -17,6 +17,8 @@ import (
 type SessionModelInterface interface {
 	GetById(id int) (*Session, error)
 	Insert(token string, userId uint) (int, error)
+	GetLastUserSession(id int) (*Session, error)
+	GetUserIDByToken(token string) (uint, error)
 }
 
 type Session struct {
@@ -100,7 +102,6 @@ func (m *SessionModel) GetById(id int) (*Session, error) {
 	return s, nil
 }
 
-
 func (m *SessionModel) GetLastUserSession(id int) (*Session, error) {
 	// Write the SQL statement we want to execute. Again, I've split it over two
 	// lines for readability.
@@ -138,4 +139,19 @@ func (m *SessionModel) GetLastUserSession(id int) (*Session, error) {
 	}
 	// If everything went OK then return the Snippet object.
 	return s, nil
+}
+
+func (m *SessionModel) GetUserIDByToken(token string) (uint, error) {
+	var userID uint
+	stmt := `SELECT user_id FROM Sessions WHERE token = ? AND expiresAt > CURRENT_TIMESTAMP`
+
+	err := m.DB.QueryRow(stmt, token).Scan(&userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, errors.New("session not found or expired")
+		}
+		return 0, err
+	}
+
+	return userID, nil
 }

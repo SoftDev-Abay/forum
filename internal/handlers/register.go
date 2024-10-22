@@ -1,10 +1,9 @@
 package handlers
 
 import (
-	"fmt"
+	"game-forum-abaliyev-ashirbay/internal/models"
+	"game-forum-abaliyev-ashirbay/internal/validator"
 	"net/http"
-	"strings"
-	"unicode/utf8"
 )
 
 type registerForm struct {
@@ -35,48 +34,59 @@ func (app *Application) registerPost(w http.ResponseWriter, r *http.Request) {
 		Username:        r.PostForm.Get("username"),
 		Password:        r.PostForm.Get("password"),
 		ConfirmPassword: r.PostForm.Get("confirmPassword"),
-		FieldErrors:     map[string]string{},
 	}
 
-	if strings.TrimSpace(form.Email) == "" {
-		form.FieldErrors["email"] = "This field cannot be blank"
-	} else if utf8.RuneCountInString(form.Email) > 50 {
-		form.FieldErrors["email"] = "This field cannot be more than 50 characters long"
-	}
-	if strings.TrimSpace(form.Username) == "" {
-		form.FieldErrors["username"] = "This field cannot be blank"
-	} else if utf8.RuneCountInString(form.Username) > 30 {
-		form.FieldErrors["username"] = "This field cannot be more than 30 characters long"
-	}
-	if strings.TrimSpace(form.Password) == "" {
-		form.FieldErrors["password"] = "This field cannot be blank"
-	} else if utf8.RuneCountInString(form.Password) > 30 {
-		form.FieldErrors["password"] = "This field cannot be more than 30 characters long"
-	}
-	if strings.TrimSpace(form.ConfirmPassword) == "" {
-		form.FieldErrors["confirmPassword"] = "This field cannot be blank"
-	} else if utf8.RuneCountInString(form.ConfirmPassword) > 30 {
-		form.FieldErrors["confirmPassword"] = "Cofirm password has to be the same"
-	}
+	// Initialize the validator
+	v := validator.Validator{}
 
-	if len(form.FieldErrors) > 0 {
-		data := templateData{}
-		data.Form = form
+	// Perform validation
+	v.CheckField(validator.NotBlank(form.Email), "email", "Email cannot be blank")
+	v.CheckField(validator.MaxChars(form.Email, 50), "email", "Email must not exceed 50 characters")
+	v.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "Invalid email address")
+
+	v.CheckField(validator.NotBlank(form.Username), "username", "Username cannot be blank")
+	v.CheckField(validator.MaxChars(form.Username, 30), "username", "Username must not exceed 30 characters")
+
+	v.CheckField(validator.NotBlank(form.Password), "password", "Password cannot be blank")
+	v.CheckField(validator.MinChars(form.Password, 8), "password", "Password must be at least 8 characters long")
+	v.CheckField(validator.MaxChars(form.Password, 30), "password", "Password must not exceed 30 characters")
+
+	v.CheckField(validator.NotBlank(form.ConfirmPassword), "confirmPassword", "Confirm Password cannot be blank")
+	v.CheckField(form.Password == form.ConfirmPassword, "confirmPassword", "Passwords do not match")
+
+	// If validation fails, re-render the form with errors
+	if !v.Valid() {
+		data := templateData{
+			Form:       form,
+			FormErrors: v.FieldErrors,
+		}
 		app.render(w, r, http.StatusUnprocessableEntity, "register.html", data)
 		return
 	}
 
+	// Hash the password
 	hashedPassword, err := app.generateHashPassword(form.Password)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
+	// Insert the user into the database
 	_, err = app.Users.Insert(form.Email, form.Username, hashedPassword, false)
 	if err != nil {
+		if err == models.ErrDuplicateEmail {
+			v.AddFieldError("email", "Email is already in use")
+			data := templateData{
+				Form:       form,
+				FormErrors: v.FieldErrors,
+			}
+			app.render(w, r, http.StatusUnprocessableEntity, "register.html", data)
+			return
+		}
 		app.serverError(w, r, err)
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/"), http.StatusSeeOther)
+	// Redirect to the login page or home page
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

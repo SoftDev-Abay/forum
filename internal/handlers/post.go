@@ -21,7 +21,15 @@ func (app Application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var data templateData
+	categories, err := app.Categories.GetAll()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	data := templateData{
+		Categories: categories,
+	}
 
 	app.render(w, r, http.StatusOK, "create.html", data)
 }
@@ -32,34 +40,58 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var data templateData
+	categories, err := app.Categories.GetAll()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	data := templateData{
+		Categories: categories,
+	}
+	fmt.Println(categories)
+
 	app.render(w, r, http.StatusOK, "create.html", data)
 }
 
 func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	// Ensure the user is authenticated
+	userID, err := app.getAuthenticatedUserID(r)
+	if err != nil {
+		// Redirect to login page or show an error
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// Parse the form data
+	err = r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
 
+	// Extract form values
 	title := r.PostForm.Get("title")
 	categoryIDStr := r.PostForm.Get("category_id")
 	content := r.PostForm.Get("content")
 
+	// Convert categoryID to integer
 	categoryID, err := strconv.Atoi(categoryIDStr)
 	if err != nil || categoryID < 1 {
 		categoryID = 0
 	}
 
+	// Create a PostForm instance with the extracted data
 	form := PostForm{
 		Title:      title,
-		CategoryID: categoryID,
+		CategoryID: uint(categoryID),
 		Content:    content,
 	}
 
+	// Initialize the validator
 	v := validator.Validator{}
 
+	// Perform validation checks
 	v.CheckField(validator.NotBlank(form.Title), "title", "Title must not be blank")
 	v.CheckField(validator.MaxChars(form.Title, 100), "title", "Title must not be more than 100 characters long")
 
@@ -68,6 +100,7 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 	v.CheckField(validator.NotBlank(form.Content), "content", "Content must not be blank")
 	v.CheckField(validator.MinChars(form.Content, 10), "content", "Content must be at least 10 characters long")
 
+	// If validation fails, re-display the form with errors
 	if !v.Valid() {
 		categories, err := app.Categories.GetAll()
 		if err != nil {
@@ -75,6 +108,7 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		fmt.Println(categories)
 		data := templateData{
 			Form:       form,
 			FormErrors: v.FieldErrors,
@@ -84,17 +118,13 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := app.getAuthenticatedUserID(r)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
+	// Insert the new post into the database
 	postID, err := app.Posts.Insert(form.Title, form.Content, "", time.Now(), form.CategoryID, userID)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
+	// Redirect to the newly created post
 	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postID), http.StatusSeeOther)
 }

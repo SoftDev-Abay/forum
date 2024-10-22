@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -53,7 +54,22 @@ func (app *Application) generateHashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
-func (app *Application) compareHashPassword(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
+func (app *Application) compareHashPassword(password, hashedPassword string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+}
+
+func (app *Application) getAuthenticatedUserID(r *http.Request) (uint, error) {
+	// Retrieve the session token from the "token" cookie
+	tokenCookie, err := r.Cookie("token")
+	if err != nil || tokenCookie.Value == "" {
+		return 0, errors.New("user not authenticated")
+	}
+
+	// Use the token to get the user ID from the session store
+	userID, err := app.Session.GetUserIDByToken(tokenCookie.Value)
+	if err != nil {
+		return 0, errors.New("invalid session token")
+	}
+
+	return userID, nil
 }

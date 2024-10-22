@@ -5,11 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"game-forum-abaliyev-ashirbay/internal/models"
-	"net/http"
-	"strings"
-	"unicode/utf8"
-
+	"game-forum-abaliyev-ashirbay/internal/validator"
 	"github.com/gofrs/uuid"
+	"net/http"
 )
 
 // UserInfo struct to hold user information
@@ -41,69 +39,60 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := loginForm{
-		Email:       r.PostForm.Get("email"),
-		Password:    r.PostForm.Get("password"),
-		FieldErrors: map[string]string{},
+		Email:    r.PostForm.Get("email"),
+		Password: r.PostForm.Get("password"),
 	}
 
-	if strings.TrimSpace(form.Email) == "" {
-		form.FieldErrors["email"] = "This field cannot be blank"
-	} else if utf8.RuneCountInString(form.Email) > 50 {
-		form.FieldErrors["email"] = "This field cannot be more than 50 characters long"
-	}
-	if strings.TrimSpace(form.Password) == "" {
-		form.FieldErrors["password"] = "This field cannot be blank"
-	} else if utf8.RuneCountInString(form.Password) > 30 {
-		form.FieldErrors["password"] = "This field cannot be more than 30 characters long"
-	}
+	// Initialize the validator
+	v := validator.Validator{}
 
-	if len(form.FieldErrors) > 0 {
-		fmt.Println("log 1 ")
+	// Perform validation using your validator package
+	v.CheckField(validator.NotBlank(form.Email), "email", "Email cannot be blank")
+	v.CheckField(validator.MaxChars(form.Email, 50), "email", "Email must not exceed 50 characters")
+	v.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "Invalid email address")
 
-		data := templateData{}
-		data.Form = form
+	v.CheckField(validator.NotBlank(form.Password), "password", "Password cannot be blank")
+	v.CheckField(validator.MaxChars(form.Password, 30), "password", "Password must not exceed 30 characters")
+
+	// If validation fails, re-render the form with errors
+	if !v.Valid() {
+		data := templateData{
+			Form:       form,
+			FormErrors: v.FieldErrors,
+		}
 		app.render(w, r, http.StatusUnprocessableEntity, "login.html", data)
 		return
 	}
 
+	// Retrieve the user from the database
 	user, err := app.Users.GetByUsernameOrEmail(form.Email)
 	if err != nil {
-		fmt.Println("log 2 ")
-
-		fmt.Println(user)
-		fmt.Println(err)
-
 		if err == models.ErrNoRecord {
-			fmt.Println("log 3 ")
-
-			form.FieldErrors["general"] = "Incorrect password or email"
-
-			data := templateData{}
-			data.Form = form
+			v.AddFieldError("general", "Incorrect email or password")
+			data := templateData{
+				Form:       form,
+				FormErrors: v.FieldErrors,
+			}
 			app.render(w, r, http.StatusUnprocessableEntity, "login.html", data)
 			return
 		}
+		app.serverError(w, r, err)
+		return
+	}
 
-		data := templateData{}
-		data.Form = form
+	// Verify the password
+	err = app.compareHashPassword(form.Password, user.Password)
+	if err != nil {
+		v.AddFieldError("general", "Incorrect email or password")
+		data := templateData{
+			Form:       form,
+			FormErrors: v.FieldErrors,
+		}
 		app.render(w, r, http.StatusUnprocessableEntity, "login.html", data)
 		return
 	}
 
-	errHash := app.compareHashPassword(form.Password, user.Password)
-
-	if !errHash {
-		fmt.Println("log 4 ")
-
-		form.FieldErrors["general"] = "Incorrect password or email"
-
-		data := templateData{}
-		data.Form = form
-		app.render(w, r, http.StatusUnprocessableEntity, "login.html", data)
-		return
-	}
-	fmt.Println("log 5 ")
-
+	// Generate token and set cookies
 	token, err := GenerateToken()
 	if err != nil {
 		app.serverError(w, r, err)
@@ -115,24 +104,20 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, r, err)
 		return
 	}
-
 	userInfo := UserInfo{
 		ID:       user.ID,
 		Username: user.Username,
 		Email:    user.Email,
 	}
-	fmt.Println("log 6")
-
+	// Set the session token cookie
 	err = setLoginCookies(w, userInfo, token)
-
 	if err != nil {
-		fmt.Println(err)
 		app.serverError(w, r, err)
 		return
 	}
 
-	fmt.Println("hello")
-	http.Redirect(w, r, fmt.Sprintf("/"), http.StatusSeeOther)
+	// Redirect to the home page
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // setLoginCookies sets the user info and token as cookies

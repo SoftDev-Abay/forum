@@ -93,5 +93,3 @@ func (m *PostModel) Latest() ([]*Posts, error) {
 
 	return posts, nil
 }
-
-var ErrNoRecord = errors.New("models: no matching record found")
