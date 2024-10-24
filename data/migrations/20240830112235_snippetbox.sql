@@ -63,7 +63,7 @@ CREATE TABLE Comment_Reactions (
 CREATE TABLE Sessions (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     token TEXT NOT NULL UNIQUE,
-    user_id INTEGER NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL,
     createdAt DATETIME NOT NULL,
     expiresAt DATETIME NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(id)

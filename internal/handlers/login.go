@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"game-forum-abaliyev-ashirbay/internal/models"
 	"game-forum-abaliyev-ashirbay/internal/validator"
-	"github.com/gofrs/uuid"
 	"net/http"
+
+	"github.com/gofrs/uuid"
 )
 
 // UserInfo struct to hold user information
@@ -110,7 +111,7 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 		Email:    user.Email,
 	}
 	// Set the session token cookie
-	err = setLoginCookies(w, userInfo, token)
+	err = setLoginCookies(r, w, userInfo, token)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -121,7 +122,7 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 }
 
 // setLoginCookies sets the user info and token as cookies
-func setLoginCookies(w http.ResponseWriter, userInfo UserInfo, token string) error {
+func setLoginCookies(r *http.Request, w http.ResponseWriter, userInfo UserInfo, token string) error {
 	// Serialize user info to JSON
 	userInfoJSON, err := json.Marshal(userInfo)
 	if err != nil {
@@ -129,16 +130,19 @@ func setLoginCookies(w http.ResponseWriter, userInfo UserInfo, token string) err
 		return err
 	}
 
-	// Set user info cookie
-	userInfoCookie := http.Cookie{
-		Name:     "user_info",
-		Value:    string(userInfoJSON),
-		Path:     "/",
-		MaxAge:   24 * 60 * 60 * 60 * 60, // 1 day
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-	}
+	fmt.Println(userInfo)
+	fmt.Println(userInfoJSON)
+
+	// // Set user info cookie
+	// userInfoCookie := http.Cookie{
+	// 	Name:     "user_info",
+	// 	Value:    string(userInfoJSON),
+	// 	Path:     "/",
+	// 	MaxAge:   24 * 60 * 60 * 60 * 60, // 1 day
+	// 	HttpOnly: true,
+	// 	Secure:   true,
+	// 	SameSite: http.SameSiteLaxMode,
+	// }
 
 	// Set token cookie
 	tokenCookie := http.Cookie{
@@ -151,8 +155,11 @@ func setLoginCookies(w http.ResponseWriter, userInfo UserInfo, token string) err
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	http.SetCookie(w, &userInfoCookie)
-	http.SetCookie(w, &tokenCookie)
+	// r.AddCookie(&userInfoCookie)
+	r.AddCookie(&tokenCookie)
+
+	// http.SetCookie(w, &userInfoCookie)
+	// http.SetCookie(w, &tokenCookie)
 
 	return nil
 }
