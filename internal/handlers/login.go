@@ -125,17 +125,6 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 func setLoginCookies(r *http.Request, w http.ResponseWriter, userInfo UserInfo, token string) error {
 	// Serialize user info to JSON
 
-	// // Set user info cookie
-	// userInfoCookie := http.Cookie{
-	// 	Name:     "user_info",
-	// 	Value:    string(userInfoJSON),
-	// 	Path:     "/",
-	// 	MaxAge:   24 * 60 * 60 * 60 * 60, // 1 day
-	// 	HttpOnly: true,
-	// 	Secure:   true,
-	// 	SameSite: http.SameSiteLaxMode,
-	// }
-
 	// Set token cookie
 	tokenCookie := http.Cookie{
 		Name:     "token",
@@ -146,11 +135,7 @@ func setLoginCookies(r *http.Request, w http.ResponseWriter, userInfo UserInfo, 
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	}
-
-	// r.AddCookie(&userInfoCookie)
-	// r.AddCookie(&tokenCookie)
-
-	// http.SetCookie(w, &userInfoCookie)
+	
 	http.SetCookie(w, &tokenCookie)
 
 	return nil

@@ -8,6 +8,14 @@ import (
 	"time"
 )
 
+type User struct {
+	ID       uint
+	Username string
+	Password string
+	Email    string
+	Enabled  bool
+}
+
 type PostForm struct {
 	Title      string
 	CategoryID uint
@@ -56,15 +64,14 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 
 func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 	// Ensure the user is authenticated
-	userID, err := app.getAuthenticatedUserID(r)
-	if err != nil {
-		// Redirect to login page or show an error
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
-	}
+
+	user := r.Context().Value(userContextKey) // Assuming User is your user type
+
+	fmt.Println("user")
+	fmt.Println(user)
 
 	// Parse the form data
-	err = r.ParseForm()
+	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
@@ -119,7 +126,7 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert the new post into the database
-	postID, err := app.Posts.Insert(form.Title, form.Content, "", time.Now(), form.CategoryID, userID)
+	postID, err := app.Posts.Insert(form.Title, form.Content, "", time.Now(), form.CategoryID, 1)
 	if err != nil {
 		app.serverError(w, r, err)
 		return

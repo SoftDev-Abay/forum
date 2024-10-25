@@ -6,6 +6,11 @@ import (
 	"net/http"
 )
 
+
+type contextKey string
+
+const userContextKey contextKey = "userContextKey"
+
 func (app *Application) loginMiddware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenCookie, err := r.Cookie("token")
@@ -25,7 +30,7 @@ func (app *Application) loginMiddware(next http.Handler) http.Handler {
 		}
 
 		// Attach userInfo to the request context
-		ctx := context.WithValue(r.Context(), "userContextKey", user)
+		ctx := context.WithValue(r.Context(), userContextKey, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
