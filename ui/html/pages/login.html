@@ -2,28 +2,23 @@
 {{define "main"}}
 <form action='/login/post' method='POST'>
 
-    <!-- Display general error message -->
     {{with .FormErrors.general}}
     <label class='error'>{{.}}</label>
     {{end}}
 
     <div>
         <label>Email:</label>
-        <!-- Display error message for email -->
         {{with .FormErrors.email}}
         <label class='error'>{{.}}</label>
         {{end}}
-        <!-- Re-populate the email field -->
         <input type='text' name='email' value='{{.Form.Email}}'>
     </div>
 
     <div>
         <label>Password:</label>
-        <!-- Display error message for password -->
         {{with .FormErrors.password}}
         <label class='error'>{{.}}</label>
         {{end}}
-        <!-- Password input field -->
         <input type='password' name='password' value='{{.Form.Password}}'>
     </div>
 

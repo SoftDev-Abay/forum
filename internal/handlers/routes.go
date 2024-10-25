@@ -26,6 +26,7 @@ func (app *Application) Routes() http.Handler {
 	mux.HandleFunc("/register/post", app.registerPost)
 	mux.HandleFunc("/login", app.login)
 	mux.HandleFunc("/login/post", app.loginPost)
+	mux.HandleFunc("/logout", app.logout)
 
 	return mux
 }

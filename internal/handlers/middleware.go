@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"context" // New import
-	"fmt"
+	"context"
 	"net/http"
 )
-
 
 type contextKey string
 
@@ -15,7 +13,7 @@ func (app *Application) loginMiddware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenCookie, err := r.Cookie("token")
 		if err != nil {
-			fmt.Println(err)
+			app.Logger.Error(err.Error())
 
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
@@ -23,13 +21,12 @@ func (app *Application) loginMiddware(next http.Handler) http.Handler {
 
 		user, err := app.Users.GetByToken(tokenCookie.Value)
 		if err != nil {
-			fmt.Println(err)
+			app.Logger.Error(err.Error())
 
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
 
-		// Attach userInfo to the request context
 		ctx := context.WithValue(r.Context(), userContextKey, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -37,8 +34,6 @@ func (app *Application) loginMiddware(next http.Handler) http.Handler {
 
 func secureHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Note: This is split across multiple lines for readability. You don't
-		// need to do this in your own code.
 		w.Header().Set("Content-Security-Policy",
 			"default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com")
 		w.Header().Set("Referrer-Policy", "origin-when-cross-origin")

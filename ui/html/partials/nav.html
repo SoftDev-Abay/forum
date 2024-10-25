@@ -2,7 +2,11 @@
 <nav>
     <a href='/'>Home</a>
     <a href="/post/create">Create</a>
-    <a href="/register">Register</a>
-    <a href="/login">Login</a>
+    {{if .IsAuthenticated}}
+        <a href="/logout">Logout</a>
+    {{else}}
+        <a href="/register">Register</a>
+        <a href="/login">Login</a>
+    {{end}}
 </nav>
 {{end}}
