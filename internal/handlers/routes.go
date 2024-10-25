@@ -21,12 +21,11 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
 	mux.HandleFunc("/", app.home)
 	mux.HandleFunc("/post/view", app.postView)
-	mux.HandleFunc("/post/create", app.postCreate)
+	mux.Handle("/post/create", app.loginMiddware(http.HandlerFunc(app.postCreate)))
 	mux.HandleFunc("/register", app.register)
 	mux.HandleFunc("/register/post", app.registerPost)
 	mux.HandleFunc("/login", app.login)
 	mux.HandleFunc("/login/post", app.loginPost)
-
 
 	return mux
 }

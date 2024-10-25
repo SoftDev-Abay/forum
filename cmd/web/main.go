@@ -6,13 +6,14 @@ import (
 	"flag"
 	"game-forum-abaliyev-ashirbay/internal/handlers"
 	"game-forum-abaliyev-ashirbay/internal/models"
-	_ "github.com/mattn/go-sqlite3"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {

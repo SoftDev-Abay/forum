@@ -7,6 +7,7 @@ import (
 
 type UserModelInterface interface {
 	GetById(id int) (*User, error)
+	GetByToken(token string) (*User, error)
 	GetAll() ([]*User, error)
 	Insert(email string, username string, password string, enabled bool) (int, error)
 	GetByUsernameOrEmail(column string) (*User, error)
@@ -49,6 +50,26 @@ func (m *UserModel) GetById(id int) (*User, error) {
 	u := &User{}
 
 	err := m.DB.QueryRow(stmt, id).Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Enabled)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+	// If everything went OK then return the Snippet object.
+	return u, nil
+}
+
+func (m *UserModel) GetByToken(token string) (*User, error) {
+	stmt := `SELECT u.id, u.email, u.username, u.password, u.enabled 
+	FROM users u
+	INNER JOIN Sessions s on s.user_id = u.id
+	WHERE s.token = ? and s.expiresAt > datetime('now')`
+
+	u := &User{}
+
+	err := m.DB.QueryRow(stmt, token).Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Enabled)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord

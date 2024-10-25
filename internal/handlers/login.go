@@ -124,14 +124,6 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 // setLoginCookies sets the user info and token as cookies
 func setLoginCookies(r *http.Request, w http.ResponseWriter, userInfo UserInfo, token string) error {
 	// Serialize user info to JSON
-	userInfoJSON, err := json.Marshal(userInfo)
-	if err != nil {
-		fmt.Println("Error marshaling user info:", err)
-		return err
-	}
-
-	fmt.Println(userInfo)
-	fmt.Println(userInfoJSON)
 
 	// // Set user info cookie
 	// userInfoCookie := http.Cookie{
@@ -156,10 +148,10 @@ func setLoginCookies(r *http.Request, w http.ResponseWriter, userInfo UserInfo, 
 	}
 
 	// r.AddCookie(&userInfoCookie)
-	r.AddCookie(&tokenCookie)
+	// r.AddCookie(&tokenCookie)
 
 	// http.SetCookie(w, &userInfoCookie)
-	// http.SetCookie(w, &tokenCookie)
+	http.SetCookie(w, &tokenCookie)
 
 	return nil
 }

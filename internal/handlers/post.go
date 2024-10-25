@@ -14,7 +14,7 @@ type PostForm struct {
 	Content    string
 }
 
-func (app Application) postView(w http.ResponseWriter, r *http.Request) {
+func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
 		app.notFound(w, r)
