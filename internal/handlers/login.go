@@ -11,7 +11,6 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-// UserInfo struct to hold user information
 type UserInfo struct {
 	ID       uint   `json:"id"`
 	Username string `json:"username"`
@@ -43,11 +42,7 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 		Email:    r.PostForm.Get("email"),
 		Password: r.PostForm.Get("password"),
 	}
-
-	// Initialize the validator
 	v := validator.Validator{}
-
-	// Perform validation using your validator package
 	v.CheckField(validator.NotBlank(form.Email), "email", "Email cannot be blank")
 	v.CheckField(validator.MaxChars(form.Email, 50), "email", "Email must not exceed 50 characters")
 	v.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "Invalid email address")
@@ -55,7 +50,6 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 	v.CheckField(validator.NotBlank(form.Password), "password", "Password cannot be blank")
 	v.CheckField(validator.MaxChars(form.Password, 30), "password", "Password must not exceed 30 characters")
 
-	// If validation fails, re-render the form with errors
 	if !v.Valid() {
 		data := templateData{
 			Form:       form,
@@ -65,7 +59,6 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Retrieve the user from the database
 	user, err := app.Users.GetByUsernameOrEmail(form.Email)
 	if err != nil {
 		if err == models.ErrNoRecord {
@@ -81,7 +74,6 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify the password
 	err = app.compareHashPassword(form.Password, user.Password)
 	if err != nil {
 		v.AddFieldError("general", "Incorrect email or password")
@@ -93,7 +85,6 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate token and set cookies
 	token, err := GenerateToken()
 	if err != nil {
 		app.serverError(w, r, err)
@@ -110,22 +101,17 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 		Username: user.Username,
 		Email:    user.Email,
 	}
-	// Set the session token cookie
+
 	err = setLoginCookies(r, w, userInfo, token)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	// Redirect to the home page
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-// setLoginCookies sets the user info and token as cookies
 func setLoginCookies(r *http.Request, w http.ResponseWriter, userInfo UserInfo, token string) error {
-	// Serialize user info to JSON
-
-	// Set token cookie
 	tokenCookie := http.Cookie{
 		Name:     "token",
 		Value:    token,
@@ -141,13 +127,12 @@ func setLoginCookies(r *http.Request, w http.ResponseWriter, userInfo UserInfo, 
 	return nil
 }
 
-// GenerateToken generates a new UUID token
 func GenerateToken() (string, error) {
 	newUUID, err := uuid.NewV4()
 	if err != nil {
 		return "", err
 	}
-	return newUUID.String(), nil // Returns the UUID as a string
+	return newUUID.String(), nil
 }
 
 func getUserInfoFromCookie(r *http.Request) (*UserInfo, error) {
@@ -166,4 +151,34 @@ func getUserInfoFromCookie(r *http.Request) (*UserInfo, error) {
 	}
 
 	return &userInfo, nil
+}
+
+func (app *Application) logout(w http.ResponseWriter, r *http.Request) {
+    tokenCookie, err := r.Cookie("token")
+    if err != nil || tokenCookie.Value == "" {
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    token := tokenCookie.Value
+
+    err = app.Session.DeleteByToken(token)
+    if err != nil {
+        app.serverError(w, r, err)
+        return
+    }
+
+    deleteCookie := http.Cookie{
+        Name:     "token",
+        Value:    "",
+        Path:     "/",
+        MaxAge:   -1, 
+        HttpOnly: true,
+        Secure:   false, 
+        SameSite: http.SameSiteLaxMode,
+    }
+
+    http.SetCookie(w, &deleteCookie)
+
+    http.Redirect(w, r, "/", http.StatusSeeOther)
 }

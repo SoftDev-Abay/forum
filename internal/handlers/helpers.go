@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -27,6 +28,13 @@ func (app *Application) notFound(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) render(w http.ResponseWriter, r *http.Request, status int, page string, data templateData) {
+	userID, err := app.getAuthenticatedUserID(r)
+	if err == nil && userID > 0 {
+		data.IsAuthenticated = true
+	} else {
+		data.IsAuthenticated = false
+	}
+
 	ts, ok := app.TemplateCache[page]
 	if !ok {
 		err := fmt.Errorf("the template %s does not exist", page)
@@ -36,7 +44,7 @@ func (app *Application) render(w http.ResponseWriter, r *http.Request, status in
 
 	buf := new(bytes.Buffer)
 
-	err := ts.ExecuteTemplate(buf, "base", data)
+	err = ts.ExecuteTemplate(buf, "base", data)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -55,4 +63,20 @@ func (app *Application) generateHashPassword(password string) (string, error) {
 
 func (app *Application) compareHashPassword(password, hashedPassword string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+}
+
+func (app *Application) getAuthenticatedUserID(r *http.Request) (uint, error) {
+	tokenCookie, err := r.Cookie("token")
+	if err != nil || tokenCookie.Value == "" {
+		return 0, errors.New("user not authenticated")
+	}
+
+	token := tokenCookie.Value
+
+	userID, err := app.Session.GetUserIDByToken(token)
+	if err != nil {
+		return 0, errors.New("invalid session token")
+	}
+
+	return userID, nil
 }

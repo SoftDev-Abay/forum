@@ -36,10 +36,8 @@ func (app *Application) registerPost(w http.ResponseWriter, r *http.Request) {
 		ConfirmPassword: r.PostForm.Get("confirmPassword"),
 	}
 
-	// Initialize the validator
 	v := validator.Validator{}
 
-	// Perform validation
 	v.CheckField(validator.NotBlank(form.Email), "email", "Email cannot be blank")
 	v.CheckField(validator.MaxChars(form.Email, 50), "email", "Email must not exceed 50 characters")
 	v.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "Invalid email address")
@@ -54,7 +52,6 @@ func (app *Application) registerPost(w http.ResponseWriter, r *http.Request) {
 	v.CheckField(validator.NotBlank(form.ConfirmPassword), "confirmPassword", "Confirm Password cannot be blank")
 	v.CheckField(form.Password == form.ConfirmPassword, "confirmPassword", "Passwords do not match")
 
-	// If validation fails, re-render the form with errors
 	if !v.Valid() {
 		data := templateData{
 			Form:       form,
@@ -64,14 +61,12 @@ func (app *Application) registerPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Hash the password
 	hashedPassword, err := app.generateHashPassword(form.Password)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	// Insert the user into the database
 	_, err = app.Users.Insert(form.Email, form.Username, hashedPassword, false)
 	if err != nil {
 		if err == models.ErrDuplicateEmail {
@@ -87,6 +82,5 @@ func (app *Application) registerPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Redirect to the login page or home page
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

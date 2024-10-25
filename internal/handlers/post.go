@@ -63,42 +63,34 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
-	// Ensure the user is authenticated
-
-	user := r.Context().Value(userContextKey) // Assuming User is your user type
+	user := r.Context().Value(userContextKey)
 
 	fmt.Println("user")
 	fmt.Println(user)
 
-	// Parse the form data
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
 
-	// Extract form values
 	title := r.PostForm.Get("title")
 	categoryIDStr := r.PostForm.Get("category_id")
 	content := r.PostForm.Get("content")
 
-	// Convert categoryID to integer
 	categoryID, err := strconv.Atoi(categoryIDStr)
 	if err != nil || categoryID < 1 {
 		categoryID = 0
 	}
 
-	// Create a PostForm instance with the extracted data
 	form := PostForm{
 		Title:      title,
 		CategoryID: uint(categoryID),
 		Content:    content,
 	}
 
-	// Initialize the validator
 	v := validator.Validator{}
 
-	// Perform validation checks
 	v.CheckField(validator.NotBlank(form.Title), "title", "Title must not be blank")
 	v.CheckField(validator.MaxChars(form.Title, 100), "title", "Title must not be more than 100 characters long")
 
@@ -107,7 +99,6 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 	v.CheckField(validator.NotBlank(form.Content), "content", "Content must not be blank")
 	v.CheckField(validator.MinChars(form.Content, 10), "content", "Content must be at least 10 characters long")
 
-	// If validation fails, re-display the form with errors
 	if !v.Valid() {
 		categories, err := app.Categories.GetAll()
 		if err != nil {
@@ -125,13 +116,11 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Insert the new post into the database
 	postID, err := app.Posts.Insert(form.Title, form.Content, "", time.Now(), form.CategoryID, 1)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	// Redirect to the newly created post
 	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postID), http.StatusSeeOther)
 }
