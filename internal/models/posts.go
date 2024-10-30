@@ -67,7 +67,7 @@ func (m *PostModel) Get(id int) (*Posts, error) {
 func (m *PostModel) Latest() ([]*Posts, error) {
 	stmt := `SELECT id, title, content, imgUrl, createdAt, category_id, owner_id
 	         FROM Posts
-	         ORDER BY createdAt DESC
+	         ORDER BY createdAt ASC
 	         LIMIT 10`
 
 	rows, err := m.DB.Query(stmt)

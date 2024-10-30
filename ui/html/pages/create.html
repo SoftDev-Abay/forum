@@ -1,14 +1,22 @@
 {{define "title"}} Create Post {{end}}
 {{define "main"}}
 <h2>Create a New Post</h2>
-<form action="/create" method="post">
+<form action="/post/create/post" method="post">
+
     <div class="form-group">
         <label for="title">Title:</label><br>
+        {{with .FormErrors.title}}
+        <label class='error'>{{.}}</label>
+        {{end}}
         <input type="text" id="title" name="title" required maxlength="255"><br><br>
     </div>
 
     <div class="form-group">
         <label for="category">Category:</label><br>
+        {{with .FormErrors.category_id}}
+        <label class='error'>{{.}}</label>
+        {{end}}
+
         <select id="category" name="category_id" required>
             <option value="">Select a category</option>
                 {{range .Categories}}
@@ -19,6 +27,9 @@
 
     <div class="form-group">
         <label for="content">Content:</label><br>
+        {{with .FormErrors.content}}
+        <label class='error'>{{.}}</label>
+        {{end}}
         <textarea id="content" name="content" rows="10" cols="80" required></textarea><br><br>
     </div>
 

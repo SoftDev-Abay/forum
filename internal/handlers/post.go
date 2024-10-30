@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
+	"game-forum-abaliyev-ashirbay/internal/models"
 	"game-forum-abaliyev-ashirbay/internal/validator"
 	"net/http"
 	"strconv"
@@ -23,23 +25,35 @@ type PostForm struct {
 }
 
 func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("post view accessed ")
+
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
 		app.notFound(w, r)
 		return
 	}
 
-	categories, err := app.Categories.GetAll()
+	post, err := app.Posts.Get(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w, r)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+	category, err := app.Categories.Get(int(post.CategoryID))
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
 	data := templateData{
-		Categories: categories,
+		Category: category,
+		Post:     post,
 	}
 
-	app.render(w, r, http.StatusOK, "create.html", data)
+	app.render(w, r, http.StatusOK, "view.html", data)
 }
 
 func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
@@ -63,11 +77,6 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value(userContextKey)
-
-	fmt.Println("user")
-	fmt.Println(user)
-
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
@@ -93,11 +102,14 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 
 	v.CheckField(validator.NotBlank(form.Title), "title", "Title must not be blank")
 	v.CheckField(validator.MaxChars(form.Title, 100), "title", "Title must not be more than 100 characters long")
+	v.CheckField(validator.MinChars(form.Title, 5), "title", "Title must be at least 5 characters long")
 
 	v.CheckField(form.CategoryID > 0, "category_id", "You must select a category")
 
 	v.CheckField(validator.NotBlank(form.Content), "content", "Content must not be blank")
 	v.CheckField(validator.MinChars(form.Content, 10), "content", "Content must be at least 10 characters long")
+
+	fmt.Println(form)
 
 	if !v.Valid() {
 		categories, err := app.Categories.GetAll()
@@ -112,11 +124,17 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 			FormErrors: v.FieldErrors,
 			Categories: categories,
 		}
+
 		app.render(w, r, http.StatusUnprocessableEntity, "create.html", data)
 		return
 	}
 
-	postID, err := app.Posts.Insert(form.Title, form.Content, "", time.Now(), form.CategoryID, 1)
+	userId, err := app.getAuthenticatedUserID(r)
+	if err != nil {
+		app.notAuthenticated(w, r)
+	}
+
+	postID, err := app.Posts.Insert(form.Title, form.Content, "", time.Now(), form.CategoryID, userId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return

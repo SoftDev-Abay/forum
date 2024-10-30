@@ -27,6 +27,10 @@ func (app *Application) notFound(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
+func (app *Application) notAuthenticated(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(401)
+}
+
 func (app *Application) render(w http.ResponseWriter, r *http.Request, status int, page string, data templateData) {
 	userID, err := app.getAuthenticatedUserID(r)
 	if err == nil && userID > 0 {

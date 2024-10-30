@@ -9,10 +9,13 @@ import (
 )
 
 type templateData struct {
-  	Form interface{}
-	FormErrors map[string]string
-	Categories []*models.Categories
+	Form            interface{}
+	FormErrors      map[string]string
+	Categories      []*models.Categories
+	Category        *models.Categories
+	Posts           []*models.Posts
 	IsAuthenticated bool
+	Post            *models.Posts
 }
 
 var functions = template.FuncMap{}
@@ -21,7 +24,6 @@ func NewTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 
 	pages, err := fs.Glob(ui.Files, "html/pages/*.html")
-
 	if err != nil {
 		return nil, err
 	}
