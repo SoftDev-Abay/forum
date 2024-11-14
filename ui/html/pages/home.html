@@ -12,7 +12,7 @@
 <tr>
 <!-- Use the new clean URL style-->
 <td><a href='/post/view?id={{.ID}}'>{{.Title}}</a></td>
-<td>{{.CreatedAt}}</td>
+<td>{{humanDate .CreatedAt}}</td>
 <td>#{{.ID}}</td>
 </tr>
 {{end}}

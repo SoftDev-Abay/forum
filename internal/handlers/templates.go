@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io/fs"
 	"path/filepath"
+	"time"
 )
 
 type templateData struct {
@@ -18,7 +19,9 @@ type templateData struct {
 	Post            *models.Posts
 }
 
-var functions = template.FuncMap{}
+var functions = template.FuncMap{
+	"humanDate": humanDate,
+}
 
 func NewTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
@@ -46,4 +49,12 @@ func NewTemplateCache() (map[string]*template.Template, error) {
 	}
 
 	return cache, nil
+}
+
+func humanDate(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+
+	return t.UTC().Format("02 Jan 2006 at 15:04")
 }
