@@ -111,20 +111,64 @@ func (m *UserModel) GetAll() ([]*User, error) {
 	return users, nil
 }
 
+// Check if the email exists in the database
+func (m *UserModel) EmailExists(email string) (bool, error) {
+	stmt := `SELECT EXISTS (SELECT 1 FROM users WHERE email = ?);`
+
+	var exists bool
+	err := m.DB.QueryRow(stmt, email).Scan(&exists)
+	if err != nil {
+		return false, err // return the error if any
+	}
+
+	return exists, nil
+}
+
+// Check if the username exists in the database
+func (m *UserModel) UsernameExists(username string) (bool, error) {
+	stmt := `SELECT EXISTS (SELECT 1 FROM users WHERE username = ?);`
+
+	var exists bool
+	err := m.DB.QueryRow(stmt, username).Scan(&exists)
+	if err != nil {
+		return false, err // return the error if any
+	}
+
+	return exists, nil
+}
+
+// Insert a new user into the database
 func (m *UserModel) Insert(email string, username string, password string, enabled bool) (int, error) {
+	// Check if email or username already exists
+	emailExists, err := m.EmailExists(email)
+	if err != nil {
+		return 0, err // return the error from EmailExists if any
+	}
+	if emailExists {
+		return 0, ErrDuplicateEmail // return duplicate email error if found
+	}
+
+	usernameExists, err := m.UsernameExists(username)
+	if err != nil {
+		return 0, err // return the error from UsernameExists if any
+	}
+	if usernameExists {
+		return 0, ErrDuplicateUsername // return duplicate username error if found
+	}
+
+	// Proceed with insertion if no duplicates found
 	stmt := `INSERT INTO users (email, username, password, enabled)
 	VALUES(?, ?, ?, ?)`
 
-
 	result, err := m.DB.Exec(stmt, email, username, password, enabled)
 	if err != nil {
-		return 0, err
+		return 0, err // return error from Exec if any
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		return 0, err
+		return 0, err // return error from LastInsertId if any
 	}
 
-	return int(id), nil
+	return int(id), nil // return the user ID after successful insertion
 }
