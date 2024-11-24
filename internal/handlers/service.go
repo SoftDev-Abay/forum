@@ -13,9 +13,10 @@ type Application struct {
 	Session       models.SessionModelInterface
 	Categories    models.CategoriesModelInterface
 	Posts         models.PostsModelInterface
+	PostReactions models.PostReactionModelInterface
 }
 
-func NewApp(logger *slog.Logger, teamplateCache map[string]*template.Template, categories *models.CategoriesModel, posts *models.PostModel, users *models.UserModel, session *models.SessionModel) *Application {
+func NewApp(logger *slog.Logger, teamplateCache map[string]*template.Template, categories *models.CategoriesModel, posts *models.PostModel, users *models.UserModel, session *models.SessionModel, postReactions *models.PostReactionsModel) *Application {
 	app := &Application{
 		Logger:        logger,
 		TemplateCache: teamplateCache,
@@ -23,6 +24,7 @@ func NewApp(logger *slog.Logger, teamplateCache map[string]*template.Template, c
 		Posts:         posts,
 		Users:         users,
 		Session:       session,
+		PostReactions: postReactions,
 	}
 	return app
 }

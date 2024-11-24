@@ -25,6 +25,8 @@ CREATE TABLE Posts (
     createdAt DATETIME NOT NULL,
     category_id INTEGER NOT NULL,
     owner_id INTEGER NOT NULL,
+    like_count INTEGER NOT NULL,
+    dislike_count INTEGER NOT NULL,
     FOREIGN KEY (category_id) REFERENCES Categories(id),
     FOREIGN KEY (owner_id) REFERENCES Users(id)
 );
@@ -35,6 +37,8 @@ CREATE TABLE Comments (
     post_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     text TEXT NOT NULL,
+    like_count INTEGER NOT NULL,
+    dislike_count INTEGER NOT NULL,
     FOREIGN KEY (post_id) REFERENCES Posts(id),
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );

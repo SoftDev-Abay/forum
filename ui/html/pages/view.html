@@ -1,19 +1,41 @@
 {{define "title"}}Post #{{.Post.ID}}{{end}}
+
 {{define "main"}}
 {{with .Post}}
 <div class='snippet'>
-<div class='metadata'>
-<strong>{{.Title}}</strong>
-<span>#{{.ID}}</span>
+    <div class='metadata'>
+        <strong>{{.Title}}</strong>
+        <span>#{{.ID}}</span>
+    </div>
+    <pre><code>{{.Content}}</code></pre>
+    <div class='metadata'>
+        <!-- Like and Dislike counts are clickable (submit via form) -->
+        <form action="/post/reaction?id={{.ID}}" method="POST" style="display:inline;">
+            <button type="submit" name="reaction" value="like" 
+                    style="background: none; border: none;">
+                Likes {{.LikeCount}}
+
+                <!-- {{if .IsLiked}}
+                +
+                {{else}}-
+                {{end}} -->
+            </button>
+        </form>
+        <form action="/post/reaction?id={{.ID}}" method="POST" style="display:inline;">
+            <button type="submit" name="reaction" value="dislike" 
+                    style="background: none; border: none;">
+                Dislikes {{.DislikeCount}}
+
+                <!-- {{if .IsDisliked}}
+                +
+                {{else}}-
+                {{end}} -->
+            </button>
+        </form>
+    </div>
 </div>
-<pre><code>{{.Content}}</code></pre>
-<div class='metadata'>
-<time>Created: {{humanDate .CreatedAt}}</time>
 {{end}}
-<span>{{.Category.Name}}</span>
-</div>
-<div>
-    <button></button>
-</div>
-</div>
+
+
+
 {{end}}

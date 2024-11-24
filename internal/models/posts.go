@@ -13,22 +13,27 @@ type PostsModelInterface interface {
 }
 
 type Posts struct {
-	ID         uint
-	Title      string
-	Content    string
-	ImgUrl     string
-	CreatedAt  time.Time
-	CategoryID uint
-	OwnerID    uint
+	ID           uint
+	Title        string
+	Content      string
+	ImgUrl       string
+	CreatedAt    time.Time
+	CategoryID   uint
+	OwnerID      uint
+	LikeCount    int
+	DislikeCount int
+	IsLiked      bool // Tracks whether the logged-in user has liked the post
+	IsDisliked   bool // Tracks whether the logged-in user has disliked the post
 }
 
 type PostModel struct {
-	DB *sql.DB
+	DB                 *sql.DB
+	PostReactionsModel *PostReactionsModel // Inject PostReactionsModel into PostModel
 }
 
 func (m *PostModel) Insert(title string, content string, imgUrl string, createdAt time.Time, categoryID uint, ownerID uint) (int, error) {
-	stmt := `INSERT INTO Posts (title, content, imgUrl, createdAt, category_id, owner_id)
-	         VALUES (?, ?, ?, ?, ?, ?)`
+	stmt := `INSERT INTO Posts (title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count)
+	         VALUES (?, ?, ?, ?, ?, ?, 0, 0)`
 
 	result, err := m.DB.Exec(stmt, title, content, imgUrl, createdAt, categoryID, ownerID)
 	if err != nil {
@@ -44,7 +49,7 @@ func (m *PostModel) Insert(title string, content string, imgUrl string, createdA
 }
 
 func (m *PostModel) Get(id int) (*Posts, error) {
-	stmt := `SELECT id, title, content, imgUrl, createdAt, category_id, owner_id
+	stmt := `SELECT id, title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count
 	         FROM Posts
 	         WHERE id = ?`
 
@@ -52,7 +57,7 @@ func (m *PostModel) Get(id int) (*Posts, error) {
 
 	post := &Posts{}
 
-	err := row.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt, &post.CategoryID, &post.OwnerID)
+	err := row.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt, &post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -65,7 +70,7 @@ func (m *PostModel) Get(id int) (*Posts, error) {
 }
 
 func (m *PostModel) Latest() ([]*Posts, error) {
-	stmt := `SELECT id, title, content, imgUrl, createdAt, category_id, owner_id
+	stmt := `SELECT id, title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count
 	         FROM Posts
 	         ORDER BY createdAt ASC
 	         LIMIT 10`
@@ -80,7 +85,7 @@ func (m *PostModel) Latest() ([]*Posts, error) {
 
 	for rows.Next() {
 		post := &Posts{}
-		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt, &post.CategoryID, &post.OwnerID)
+		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt, &post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount)
 		if err != nil {
 			return nil, err
 		}
@@ -92,4 +97,27 @@ func (m *PostModel) Latest() ([]*Posts, error) {
 	}
 
 	return posts, nil
+}
+
+
+// updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
+func (m *PostModel) updatePostLikeDislikeCounts(postID uint) error {
+	likes, err := m.PostReactionsModel.GetReactionCount(postID, "like")
+	if err != nil {
+		return err
+	}
+
+	dislikes, err := m.PostReactionsModel.GetReactionCount(postID, "dislike")
+	if err != nil {
+		return err
+	}
+
+	// Update the post's like/dislike counts in the database
+	stmt := `UPDATE Posts SET like_count = ?, dislike_count = ? WHERE id = ?`
+	_, err = m.DB.Exec(stmt, likes, dislikes, postID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

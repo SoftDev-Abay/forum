@@ -43,9 +43,10 @@ func main() {
 	users := &models.UserModel{DB: db}
 	session := &models.SessionModel{DB: db}
 	categoriesModel := &models.CategoriesModel{DB: db}
-	postsModel := &models.PostModel{DB: db}
+	postRecactions := &models.PostReactionsModel{DB: db}
+	postsModel := &models.PostModel{DB: db, PostReactionsModel: postRecactions}
 
-	app := handlers.NewApp(logger, templateCache, categoriesModel, postsModel, users, session)
+	app := handlers.NewApp(logger, templateCache, categoriesModel, postsModel, users, session, postRecactions)
 
 	srv := &http.Server{
 		Addr:     *addr,
