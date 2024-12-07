@@ -208,6 +208,8 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 
 	// I need to update the found reaction to a different type
 
+	// lastly I need to update the count like dislike in post itself
+
 	// Get the user ID from the session or context
 	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
@@ -223,6 +225,19 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	post, err := app.Posts.Get(postID)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w, r)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+
+	newLikeCount := post.LikeCount
+	newDislikeCount := post.DislikeCount
+
 	if existingReaction != nil {
 		// User already reacted, handle toggling reactions
 		if existingReaction.Type == reaction {
@@ -232,12 +247,27 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 				app.serverError(w, r, err)
 				return
 			}
+
+			if reaction == "like" {
+				newLikeCount -= 1
+			} else {
+				newDislikeCount -= 1
+			}
+
 		} else {
 			// If they switch reactions, update accordingly
 			err = app.PostReactions.UpdateReaction(userID, uint(postID), reaction)
 			if err != nil {
 				app.serverError(w, r, err)
 				return
+			}
+
+			if reaction == "like" {
+				newLikeCount += 1
+				newDislikeCount -= 1
+			} else {
+				newLikeCount -= 1
+				newDislikeCount += 1
 			}
 		}
 	} else {
@@ -247,6 +277,19 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 			app.serverError(w, r, err)
 			return
 		}
+
+		if reaction == "like" {
+			newLikeCount += 1
+		} else {
+			newDislikeCount += 1
+		}
+
+	}
+	err = app.Posts.UpdatePostLikeDislikeCounts(uint(postID), newLikeCount, newDislikeCount)
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
 	}
 
 	// After updating, redirect to the post view to update the UI

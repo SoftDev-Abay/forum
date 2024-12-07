@@ -312,3 +312,30 @@ footer {
     color: #6A6C6F;
     text-align: center;
 }
+
+
+.reaction-button{
+    cursor: pointer;
+    outline: 0;
+    color: #AAA;
+    /* border: solid 1px black */
+}
+
+.reaction-button:hover{
+    /* color: #4EB722;
+    text-decoration: underline;
+    cursor: pointer; */
+}
+
+
+.reaction-button:focus {
+    outline: none;
+}
+  
+.green{
+    color: green;
+}
+  
+.red{
+    color: red;
+}
