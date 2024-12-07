@@ -11,7 +11,7 @@ import (
 )
 
 type User struct {
-	ID       uint
+	ID       int
 	Username string
 	Password string
 	Email    string
@@ -20,75 +20,82 @@ type User struct {
 
 type PostForm struct {
 	Title      string
-	CategoryID uint
+	CategoryID int
 	Content    string
 }
 
 func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
-    fmt.Println("post view accessed ")
+	fmt.Println("post view accessed ")
 
-    id, err := strconv.Atoi(r.URL.Query().Get("id"))
-    if err != nil || id < 1 {
-        app.notFound(w, r)
-        return
-    }
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil || id < 1 {
+		app.notFound(w, r)
+		return
+	}
 
-    post, err := app.Posts.Get(id)
-    if err != nil {
-        if errors.Is(err, models.ErrNoRecord) {
-            app.notFound(w, r)
-        } else {
-            app.serverError(w, r, err)
-        }
-        return
-    }
-    category, err := app.Categories.Get(int(post.CategoryID))
-    if err != nil {
-        app.serverError(w, r, err)
-        return
-    }
+	if id < 0 {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
 
-    // Default reaction is none
-    post.IsLiked = false
-    post.IsDisliked = false
+	post, err := app.Posts.Get(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w, r)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+	category, err := app.Categories.Get(post.CategoryID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
-    // Check if user is authenticated
-    userID, err := app.getAuthenticatedUserID(r)
-    if err != nil {
-        // If not authenticated, they can view the post but can't interact with reactions
-        app.render(w, r, http.StatusOK, "view.html", templateData{
-            Category: category,
-            Post:     post,
-        })
-        return
-    }
+	// Default reaction is none
+	post.IsLiked = false
+	post.IsDisliked = false
 
-    // Get the user's reaction on this post (if any)
-    postReaction, err := app.PostReactions.GetReaction(userID, uint(id))
-    if err != nil && err != models.ErrNoReaction {
-        app.serverError(w, r, err)
-        return
-    }
+	// Check if user is authenticated
+	userID, err := app.getAuthenticatedUserID(r)
+	if err != nil {
+		// If not authenticated, they can view the post but can't interact with reactions
+		app.render(w, r, http.StatusOK, "view.html", templateData{
+			Category: category,
+			Post:     post,
+		})
+		return
+	}
 
-    // Set flags based on the reaction type
-    if postReaction != nil {
-        if postReaction.Type == "like" {
-            post.IsLiked = true
-        } else if postReaction.Type == "dislike" {
-            post.IsDisliked = true
-        }
-    }
+	// Get the user's reaction on this post (if any)
+	postReaction, err := app.PostReactions.GetReaction(userID, id)
+	if err != nil && err != models.ErrNoReaction {
+		app.serverError(w, r, err)
+		return
+	}
 
-    // Render the post with its reactions
-    data := templateData{
-        Category: category,
-        Post:     post,
-    }
+	// Set flags based on the reaction type
+	if postReaction != nil {
+		if postReaction.Type == "like" {
+			post.IsLiked = true
+		} else if postReaction.Type == "dislike" {
+			post.IsDisliked = true
+		}
+	}
 
-    app.render(w, r, http.StatusOK, "view.html", data)
+	comments, err := app.Comments.GetAllByPostID(id)
+
+	// Render the post with its reactions
+	data := templateData{
+		Category:    category,
+		Post:        post,
+		Comments:    comments,
+		CommentsNum: len(comments),
+	}
+
+	app.render(w, r, http.StatusOK, "view.html", data)
 }
-
-
 
 func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -128,7 +135,7 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 
 	form := PostForm{
 		Title:      title,
-		CategoryID: uint(categoryID),
+		CategoryID: categoryID,
 		Content:    content,
 	}
 
@@ -178,62 +185,62 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Request) {
-    // Get the post ID from the query parameters
-    postIDStr := r.URL.Query().Get("id")
-    postID, err := strconv.Atoi(postIDStr)
-    if err != nil || postID < 1 {
-        app.clientError(w, http.StatusBadRequest)
-        return
-    }
+	// Get the post ID from the query parameters
+	postIDStr := r.URL.Query().Get("id")
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil || postID < 1 {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
 
-    // Get the reaction type (like or dislike) from the form
-    reaction := r.FormValue("reaction")
-    if reaction != "like" && reaction != "dislike" {
-        app.clientError(w, http.StatusBadRequest)
-        return
-    }
+	// Get the reaction type (like or dislike) from the form
+	reaction := r.FormValue("reaction")
+	if reaction != "like" && reaction != "dislike" {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
 
-    // Get the user ID from the session or context
-    userID, err := app.getAuthenticatedUserID(r)
-    if err != nil {
-        // If not authenticated, return an error or handle gracefully
-        app.notAuthenticated(w, r)
-        return
-    }
+	// Get the user ID from the session or context
+	userID, err := app.getAuthenticatedUserID(r)
+	if err != nil {
+		// If not authenticated, return an error or handle gracefully
+		app.notAuthenticated(w, r)
+		return
+	}
 
-    // Check current user reaction to decide if they are changing their reaction
-    existingReaction, err := app.PostReactions.GetReaction(userID, uint(postID))
-    if err != nil && err != models.ErrNoReaction {
-        app.serverError(w, r, err)
-        return
-    }
+	// Check current user reaction to decide if they are changing their reaction
+	existingReaction, err := app.PostReactions.GetReaction(userID, postID)
+	if err != nil && err != models.ErrNoReaction {
+		app.serverError(w, r, err)
+		return
+	}
 
-    if existingReaction != nil {
-        // User already reacted, handle toggling reactions
-        if existingReaction.Type == reaction {
-            // If they click on the same reaction, it will be removed (toggle)
-            err = app.PostReactions.DeleteReaction(userID, uint(postID))
-            if err != nil {
-                app.serverError(w, r, err)
-                return
-            }
-        } else {
-            // If they switch reactions, update accordingly
-            err = app.PostReactions.UpdateReaction(userID, uint(postID), reaction)
-            if err != nil {
-                app.serverError(w, r, err)
-                return
-            }
-        }
-    } else {
-        // No existing reaction, so we add the new one
-        err = app.PostReactions.AddReaction(userID, uint(postID), reaction)
-        if err != nil {
-            app.serverError(w, r, err)
-            return
-        }
-    }
+	if existingReaction != nil {
+		// User already reacted, handle toggling reactions
+		if existingReaction.Type == reaction {
+			// If they click on the same reaction, it will be removed (toggle)
+			err = app.PostReactions.DeleteReaction(userID, postID)
+			if err != nil {
+				app.serverError(w, r, err)
+				return
+			}
+		} else {
+			// If they switch reactions, update accordingly
+			err = app.PostReactions.UpdateReaction(userID, postID, reaction)
+			if err != nil {
+				app.serverError(w, r, err)
+				return
+			}
+		}
+	} else {
+		// No existing reaction, so we add the new one
+		err = app.PostReactions.AddReaction(userID, postID, reaction)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+	}
 
-    // After updating, redirect to the post view to update the UI
-    http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postID), http.StatusSeeOther)
+	// After updating, redirect to the post view to update the UI
+	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postID), http.StatusSeeOther)
 }

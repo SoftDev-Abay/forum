@@ -7,19 +7,19 @@ import (
 )
 
 type PostsModelInterface interface {
-	Insert(title string, content string, imgUrl string, createdAt time.Time, categoryID uint, ownerID uint) (int, error)
+	Insert(title string, content string, imgUrl string, createdAt time.Time, categoryID int, ownerID int) (int, error)
 	Get(id int) (*Posts, error)
 	Latest() ([]*Posts, error)
 }
 
 type Posts struct {
-	ID           uint
+	ID           int
 	Title        string
 	Content      string
 	ImgUrl       string
 	CreatedAt    time.Time
-	CategoryID   uint
-	OwnerID      uint
+	CategoryID   int
+	OwnerID      int
 	LikeCount    int
 	DislikeCount int
 	IsLiked      bool // Tracks whether the logged-in user has liked the post
@@ -31,7 +31,7 @@ type PostModel struct {
 	PostReactionsModel *PostReactionsModel // Inject PostReactionsModel into PostModel
 }
 
-func (m *PostModel) Insert(title string, content string, imgUrl string, createdAt time.Time, categoryID uint, ownerID uint) (int, error) {
+func (m *PostModel) Insert(title string, content string, imgUrl string, createdAt time.Time, categoryID int, ownerID int) (int, error) {
 	stmt := `INSERT INTO Posts (title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count)
 	         VALUES (?, ?, ?, ?, ?, ?, 0, 0)`
 
@@ -99,9 +99,8 @@ func (m *PostModel) Latest() ([]*Posts, error) {
 	return posts, nil
 }
 
-
 // updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
-func (m *PostModel) updatePostLikeDislikeCounts(postID uint) error {
+func (m *PostModel) updatePostLikeDislikeCounts(postID int) error {
 	likes, err := m.PostReactionsModel.GetReactionCount(postID, "like")
 	if err != nil {
 		return err

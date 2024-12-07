@@ -11,16 +11,16 @@ var (
 )
 
 type PostReactionModelInterface interface {
-	AddReaction(userID uint, postID uint, reactionType string) error
-	UpdateReaction(userID uint, postID uint, reactionType string) error
-	DeleteReaction(userID uint, postID uint) error
-	GetReaction(userID uint, postID uint) (*PostReaction, error)
-	GetReactionCount(postID uint, reactionType string) (int, error)
+	AddReaction(userID int, postID int, reactionType string) error
+	UpdateReaction(userID int, postID int, reactionType string) error
+	DeleteReaction(userID int, postID int) error
+	GetReaction(userID int, postID int) (*PostReaction, error)
+	GetReactionCount(postID int, reactionType string) (int, error)
 }
 
 type PostReaction struct {
-	UserID uint
-	PostID uint
+	UserID int
+	PostID int
 	Type   string // 'like' or 'dislike'
 }
 
@@ -29,7 +29,7 @@ type PostReactionsModel struct {
 }
 
 // AddReaction adds a new reaction (like or dislike) for a user on a post
-func (m *PostReactionsModel) AddReaction(userID uint, postID uint, reactionType string) error {
+func (m *PostReactionsModel) AddReaction(userID int, postID int, reactionType string) error {
 	// Ensure valid reaction type
 	if reactionType != "like" && reactionType != "dislike" {
 		return errors.New("invalid reaction type")
@@ -56,7 +56,7 @@ func (m *PostReactionsModel) AddReaction(userID uint, postID uint, reactionType 
 	return nil
 }
 
-func (m *PostReactionsModel) UpdateReaction(userID uint, postID uint, reactionType string) error {
+func (m *PostReactionsModel) UpdateReaction(userID int, postID int, reactionType string) error {
 	// Ensure valid reaction type
 	if reactionType != "like" && reactionType != "dislike" {
 		return errors.New("invalid reaction type")
@@ -82,7 +82,7 @@ func (m *PostReactionsModel) UpdateReaction(userID uint, postID uint, reactionTy
 }
 
 // DeleteReaction removes a reaction (like or dislike) from a user on a post
-func (m *PostReactionsModel) DeleteReaction(userID uint, postID uint) error {
+func (m *PostReactionsModel) DeleteReaction(userID int, postID int) error {
 	stmt := `DELETE FROM Post_Reactions WHERE user_id = ? AND post_id = ?`
 	_, err := m.DB.Exec(stmt, userID, postID)
 	if err != nil {
@@ -92,7 +92,7 @@ func (m *PostReactionsModel) DeleteReaction(userID uint, postID uint) error {
 }
 
 // GetReaction retrieves the reaction of a user on a specific post
-func (m *PostReactionsModel) GetReaction(userID uint, postID uint) (*PostReaction, error) {
+func (m *PostReactionsModel) GetReaction(userID int, postID int) (*PostReaction, error) {
 	stmt := `SELECT type FROM Post_Reactions WHERE user_id = ? AND post_id = ?`
 	row := m.DB.QueryRow(stmt, userID, postID)
 
@@ -113,7 +113,7 @@ func (m *PostReactionsModel) GetReaction(userID uint, postID uint) (*PostReactio
 }
 
 // GetReactionCount gets the count of reactions (like or dislike) for a post
-func (m *PostReactionsModel) GetReactionCount(postID uint, reactionType string) (int, error) {
+func (m *PostReactionsModel) GetReactionCount(postID int, reactionType string) (int, error) {
 	stmt := `SELECT COUNT(*) FROM Post_Reactions WHERE post_id = ? AND type = ?`
 	var count int
 	err := m.DB.QueryRow(stmt, postID, reactionType).Scan(&count)

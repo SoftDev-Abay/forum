@@ -36,6 +36,7 @@ CREATE TABLE Comments (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     post_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
+    created_at DATETIME NOT NULL,
     text TEXT NOT NULL,
     like_count INTEGER NOT NULL,
     dislike_count INTEGER NOT NULL,
@@ -50,7 +51,7 @@ CREATE TABLE Post_Reactions (
     post_id INTEGER NOT NULL,
     PRIMARY KEY (user_id, post_id),
     FOREIGN KEY (user_id) REFERENCES Users(id),
-    FOREIGN KEY (post_id) REFERENCES Post(id)
+    FOREIGN KEY (post_id) REFERENCES Posts(id)
 );
 
 -- Create table for Comment Reactions (use TEXT for reaction type)
