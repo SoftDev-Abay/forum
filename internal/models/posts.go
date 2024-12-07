@@ -10,6 +10,7 @@ type PostsModelInterface interface {
 	Insert(title string, content string, imgUrl string, createdAt time.Time, categoryID int, ownerID int) (int, error)
 	Get(id int) (*Posts, error)
 	Latest() ([]*Posts, error)
+	GetPostsByUserID(userID int) ([]*Posts, error)
 }
 
 type Posts struct {
@@ -119,4 +120,34 @@ func (m *PostModel) updatePostLikeDislikeCounts(postID int) error {
 	}
 
 	return nil
+}
+
+func (m *PostModel) GetPostsByUserID(userID int) ([]*Posts, error) {
+	stmt := `SELECT id, title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count
+			FROM Posts 
+			WHERE owner_id = ?
+			ORDER BY createdAt ASC`
+
+	rows, err := m.DB.Query(stmt, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []*Posts
+
+	for rows.Next() {
+		post := &Posts{}
+		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt, &post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }
