@@ -69,7 +69,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the user's reaction on this post (if any)
-	postReaction, err := app.PostReactions.GetReaction(userID, id)
+	postReaction, err := app.PostReactions.GetReaction(userID, uint(id))
 	if err != nil && err != models.ErrNoReaction {
 		app.serverError(w, r, err)
 		return
@@ -84,14 +84,10 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	comments, err := app.Comments.GetAllByPostID(id)
-
 	// Render the post with its reactions
 	data := templateData{
-		Category:    category,
-		Post:        post,
-		Comments:    comments,
-		CommentsNum: len(comments),
+		Category: category,
+		Post:     post,
 	}
 
 	app.render(w, r, http.StatusOK, "view.html", data)
@@ -200,6 +196,25 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// reaction param can be either a like or a dislike
+	// post id is always that post id
+
+	// first I need to get the post reaction if exists
+
+	// three ways this can go:
+	// 1) it doesnt exist
+	// I need to create a post reaction with respectfull type: like/dislike
+
+	// 2) it exists and its the same - the reaction with same type was already made
+	// suppose its a like
+	// then I need to delete this reaction completely
+
+	// 3) it exists but its a different reaction type
+
+	// I need to update the found reaction to a different type
+
+	// lastly I need to update the count like dislike in post itself
+
 	// Get the user ID from the session or context
 	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
@@ -215,31 +230,31 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if existingReaction != nil {
-		// User already reacted, handle toggling reactions
-		if existingReaction.Type == reaction {
-			// If they click on the same reaction, it will be removed (toggle)
-			err = app.PostReactions.DeleteReaction(userID, postID)
-			if err != nil {
-				app.serverError(w, r, err)
-				return
-			}
-		} else {
-			// If they switch reactions, update accordingly
-			err = app.PostReactions.UpdateReaction(userID, postID, reaction)
-			if err != nil {
-				app.serverError(w, r, err)
-				return
-			}
-		}
-	} else {
-		// No existing reaction, so we add the new one
-		err = app.PostReactions.AddReaction(userID, postID, reaction)
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
-	}
+    if existingReaction != nil {
+        // User already reacted, handle toggling reactions
+        if existingReaction.Type == reaction {
+            // If they click on the same reaction, it will be removed (toggle)
+            err = app.PostReactions.DeleteReaction(userID, uint(postID))
+            if err != nil {
+                app.serverError(w, r, err)
+                return
+            }
+        } else {
+            // If they switch reactions, update accordingly
+            err = app.PostReactions.UpdateReaction(userID, uint(postID), reaction)
+            if err != nil {
+                app.serverError(w, r, err)
+                return
+            }
+        }
+    } else {
+        // No existing reaction, so we add the new one
+        err = app.PostReactions.AddReaction(userID, uint(postID), reaction)
+        if err != nil {
+            app.serverError(w, r, err)
+            return
+        }
+    }
 
 	// After updating, redirect to the post view to update the UI
 	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postID), http.StatusSeeOther)
