@@ -69,7 +69,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the user's reaction on this post (if any)
-	postReaction, err := app.PostReactions.GetReaction(userID, uint(id))
+	postReaction, err := app.PostReactions.GetReaction(userID, id)
 	if err != nil && err != models.ErrNoReaction {
 		app.serverError(w, r, err)
 		return
@@ -230,31 +230,72 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-    if existingReaction != nil {
-        // User already reacted, handle toggling reactions
-        if existingReaction.Type == reaction {
-            // If they click on the same reaction, it will be removed (toggle)
-            err = app.PostReactions.DeleteReaction(userID, uint(postID))
-            if err != nil {
-                app.serverError(w, r, err)
-                return
-            }
-        } else {
-            // If they switch reactions, update accordingly
-            err = app.PostReactions.UpdateReaction(userID, uint(postID), reaction)
-            if err != nil {
-                app.serverError(w, r, err)
-                return
-            }
-        }
-    } else {
-        // No existing reaction, so we add the new one
-        err = app.PostReactions.AddReaction(userID, uint(postID), reaction)
-        if err != nil {
-            app.serverError(w, r, err)
-            return
-        }
-    }
+	post, err := app.Posts.Get(postID)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w, r)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+
+	newLikeCount := post.LikeCount
+	newDislikeCount := post.DislikeCount
+
+	if existingReaction != nil {
+		// User already reacted, handle toggling reactions
+		if existingReaction.Type == reaction {
+			// If they click on the same reaction, it will be removed (toggle)
+			err = app.PostReactions.DeleteReaction(userID, postID)
+			if err != nil {
+				app.serverError(w, r, err)
+				return
+			}
+
+			if reaction == "like" {
+				newLikeCount -= 1
+			} else {
+				newDislikeCount -= 1
+			}
+
+		} else {
+			// If they switch reactions, update accordingly
+			err = app.PostReactions.UpdateReaction(userID, postID, reaction)
+			if err != nil {
+				app.serverError(w, r, err)
+				return
+			}
+
+			if reaction == "like" {
+				newLikeCount += 1
+				newDislikeCount -= 1
+			} else {
+				newLikeCount -= 1
+				newDislikeCount += 1
+			}
+		}
+	} else {
+		// No existing reaction, so we add the new one
+		err = app.PostReactions.AddReaction(userID, postID, reaction)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		if reaction == "like" {
+			newLikeCount += 1
+		} else {
+			newDislikeCount += 1
+		}
+
+	}
+	err = app.Posts.UpdatePostLikeDislikeCounts(postID, newLikeCount, newDislikeCount)
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
 	// After updating, redirect to the post view to update the UI
 	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postID), http.StatusSeeOther)

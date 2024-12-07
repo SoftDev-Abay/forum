@@ -11,7 +11,7 @@ type PostsModelInterface interface {
 	Get(id int) (*Posts, error)
 	Latest() ([]*Posts, error)
 	GetPostsByUserID(userID int) ([]*Posts, error)
-	UpdatePostLikeDislikeCounts(postID uint, likeCount int, dislikeCount int) error
+	UpdatePostLikeDislikeCounts(postID int, likeCount int, dislikeCount int) error
 }
 
 type Posts struct {
@@ -102,7 +102,7 @@ func (m *PostModel) Latest() ([]*Posts, error) {
 }
 
 // updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
-func (m *PostModel) UpdatePostLikeDislikeCounts(postID uint, likeCount int, dislikeCount int) error {
+func (m *PostModel) UpdatePostLikeDislikeCounts(postID int, likeCount int, dislikeCount int) error {
 	// Update the post's like/dislike counts in the database
 	stmt := `UPDATE Posts SET like_count = ?, dislike_count = ? WHERE id = ?`
 	_, err := m.DB.Exec(stmt, likeCount, dislikeCount, postID)
