@@ -1,0 +1,23 @@
+{{define "title"}}Personal page{{end}}
+
+{{define "main"}}
+<h2>My Posts</h2>
+{{if .Posts}}
+<table>
+<tr>
+<th>Title</th>
+<th>Created</th>
+<th>ID</th>
+</tr>
+{{range .Posts}}
+<tr>
+<!-- Use the new clean URL style-->
+<td><a href='/post/view?id={{.ID}}'>{{.Title}}</a></td>
+<td>{{humanDate .CreatedAt}}</td>
+<td>#{{.ID}}</td>
+</tr>
+{{end}}
+</table>
+{{else}}
+{{end}}
+{{end}}

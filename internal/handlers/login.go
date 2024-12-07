@@ -12,7 +12,7 @@ import (
 )
 
 type UserInfo struct {
-	ID       uint   `json:"id"`
+	ID       int    `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 }
@@ -121,7 +121,7 @@ func setLoginCookies(r *http.Request, w http.ResponseWriter, userInfo UserInfo, 
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	}
-	
+
 	http.SetCookie(w, &tokenCookie)
 
 	return nil
@@ -154,31 +154,31 @@ func getUserInfoFromCookie(r *http.Request) (*UserInfo, error) {
 }
 
 func (app *Application) logout(w http.ResponseWriter, r *http.Request) {
-    tokenCookie, err := r.Cookie("token")
-    if err != nil || tokenCookie.Value == "" {
-        http.Redirect(w, r, "/", http.StatusSeeOther)
-        return
-    }
+	tokenCookie, err := r.Cookie("token")
+	if err != nil || tokenCookie.Value == "" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
 
-    token := tokenCookie.Value
+	token := tokenCookie.Value
 
-    err = app.Session.DeleteByToken(token)
-    if err != nil {
-        app.serverError(w, r, err)
-        return
-    }
+	err = app.Session.DeleteByToken(token)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
-    deleteCookie := http.Cookie{
-        Name:     "token",
-        Value:    "",
-        Path:     "/",
-        MaxAge:   -1, 
-        HttpOnly: true,
-        Secure:   false, 
-        SameSite: http.SameSiteLaxMode,
-    }
+	deleteCookie := http.Cookie{
+		Name:     "token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	}
 
-    http.SetCookie(w, &deleteCookie)
+	http.SetCookie(w, &deleteCookie)
 
-    http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

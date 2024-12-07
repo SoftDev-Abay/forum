@@ -69,7 +69,7 @@ func (app *Application) compareHashPassword(password, hashedPassword string) err
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
-func (app *Application) getAuthenticatedUserID(r *http.Request) (uint, error) {
+func (app *Application) getAuthenticatedUserID(r *http.Request) (int, error) {
 	tokenCookie, err := r.Cookie("token")
 	if err != nil || tokenCookie.Value == "" {
 		return 0, errors.New("user not authenticated")

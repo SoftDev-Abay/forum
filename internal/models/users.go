@@ -14,7 +14,7 @@ type UserModelInterface interface {
 }
 
 type User struct {
-	ID       uint
+	ID       int
 	Username string
 	Password string
 	Email    string

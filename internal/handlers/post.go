@@ -11,7 +11,7 @@ import (
 )
 
 type User struct {
-	ID       uint
+	ID       int
 	Username string
 	Password string
 	Email    string
@@ -20,7 +20,7 @@ type User struct {
 
 type PostForm struct {
 	Title      string
-	CategoryID uint
+	CategoryID int
 	Content    string
 }
 
@@ -33,6 +33,11 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if id < 0 {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
 	post, err := app.Posts.Get(id)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
@@ -42,7 +47,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	category, err := app.Categories.Get(int(post.CategoryID))
+	category, err := app.Categories.Get(post.CategoryID)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -64,7 +69,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the user's reaction on this post (if any)
-	postReaction, err := app.PostReactions.GetReaction(userID, uint(id))
+	postReaction, err := app.PostReactions.GetReaction(userID, id)
 	if err != nil && err != models.ErrNoReaction {
 		app.serverError(w, r, err)
 		return
@@ -126,7 +131,7 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 
 	form := PostForm{
 		Title:      title,
-		CategoryID: uint(categoryID),
+		CategoryID: categoryID,
 		Content:    content,
 	}
 
@@ -208,6 +213,8 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 
 	// I need to update the found reaction to a different type
 
+	// lastly I need to update the count like dislike in post itself
+
 	// Get the user ID from the session or context
 	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
@@ -217,36 +224,77 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Check current user reaction to decide if they are changing their reaction
-	existingReaction, err := app.PostReactions.GetReaction(userID, uint(postID))
+	existingReaction, err := app.PostReactions.GetReaction(userID, postID)
 	if err != nil && err != models.ErrNoReaction {
 		app.serverError(w, r, err)
 		return
 	}
 
+	post, err := app.Posts.Get(postID)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w, r)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+
+	newLikeCount := post.LikeCount
+	newDislikeCount := post.DislikeCount
+
 	if existingReaction != nil {
 		// User already reacted, handle toggling reactions
 		if existingReaction.Type == reaction {
 			// If they click on the same reaction, it will be removed (toggle)
-			err = app.PostReactions.DeleteReaction(userID, uint(postID))
+			err = app.PostReactions.DeleteReaction(userID, postID)
 			if err != nil {
 				app.serverError(w, r, err)
 				return
 			}
+
+			if reaction == "like" {
+				newLikeCount -= 1
+			} else {
+				newDislikeCount -= 1
+			}
+
 		} else {
 			// If they switch reactions, update accordingly
-			err = app.PostReactions.UpdateReaction(userID, uint(postID), reaction)
+			err = app.PostReactions.UpdateReaction(userID, postID, reaction)
 			if err != nil {
 				app.serverError(w, r, err)
 				return
+			}
+
+			if reaction == "like" {
+				newLikeCount += 1
+				newDislikeCount -= 1
+			} else {
+				newLikeCount -= 1
+				newDislikeCount += 1
 			}
 		}
 	} else {
 		// No existing reaction, so we add the new one
-		err = app.PostReactions.AddReaction(userID, uint(postID), reaction)
+		err = app.PostReactions.AddReaction(userID, postID, reaction)
 		if err != nil {
 			app.serverError(w, r, err)
 			return
 		}
+
+		if reaction == "like" {
+			newLikeCount += 1
+		} else {
+			newDislikeCount += 1
+		}
+
+	}
+	err = app.Posts.UpdatePostLikeDislikeCounts(postID, newLikeCount, newDislikeCount)
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
 	}
 
 	// After updating, redirect to the post view to update the UI

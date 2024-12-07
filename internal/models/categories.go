@@ -12,7 +12,7 @@ type CategoriesModelInterface interface {
 }
 
 type Categories struct {
-	ID   uint
+	ID   int
 	Name string
 }
 

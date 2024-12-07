@@ -11,31 +11,21 @@
     <div class='metadata'>
         <!-- Like and Dislike counts are clickable (submit via form) -->
         <form action="/post/reaction?id={{.ID}}" method="POST" style="display:inline;">
-            <button type="submit" name="reaction" value="like" 
-                    style="background: none; border: none;">
-                Likes {{.LikeCount}}
-
-                <!-- {{if .IsLiked}}
-                +
-                {{else}}-
-                {{end}} -->
+            <button class="reaction-button" type="submit" name="reaction" value="like">
+                <i class="fa fa-thumbs-up {{if .IsLiked}}green{{else}}no-color{{end}}"></i>
+                {{.LikeCount}}
             </button>
         </form>
         <form action="/post/reaction?id={{.ID}}" method="POST" style="display:inline;">
-            <button type="submit" name="reaction" value="dislike" 
-                    style="background: none; border: none;">
-                Dislikes {{.DislikeCount}}
-
-                <!-- {{if .IsDisliked}}
-                +
-                {{else}}-
-                {{end}} -->
+            <button class="reaction-button" type="submit" name="reaction" value="dislike">
+                <i class="fa fa-thumbs-down {{if .IsDisliked}}red{{else}}no-color{{end}}"></i>
+                {{.DislikeCount}}
             </button>
         </form>
     </div>
 </div>
+
+<br>
+
 {{end}}
-
-
-
 {{end}}

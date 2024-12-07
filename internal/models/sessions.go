@@ -16,16 +16,16 @@ import (
 
 type SessionModelInterface interface {
 	GetById(id int) (*Session, error)
-	Insert(token string, userId uint) (int, error)
+	Insert(token string, userId int) (int, error)
 	GetLastUserSession(id int) (*Session, error)
-	GetUserIDByToken(token string) (uint, error)
+	GetUserIDByToken(token string) (int, error)
 	DeleteByToken(token string) error
 }
 
 type Session struct {
-	ID        uint
+	ID        int
 	Token     string
-	UserID    uint
+	UserID    int
 	CreatedAt time.Time
 	ExpiresAt time.Time
 }
@@ -35,7 +35,7 @@ type SessionModel struct {
 	DB *sql.DB
 }
 
-func (m *SessionModel) Insert(token string, userId uint) (int, error) {
+func (m *SessionModel) Insert(token string, userId int) (int, error) {
 	// Write the SQL statement we want to execute. I've split it over two lines
 	// for readability (which is why it's surrounded with backquotes instead
 	// of normal double quotes).
@@ -104,28 +104,28 @@ func (m *SessionModel) GetLastUserSession(id int) (*Session, error) {
 	return s, nil
 }
 
-func (m *SessionModel) GetUserIDByToken(token string) (uint, error) {
-    var userID uint
-    stmt := `SELECT user_id FROM Sessions WHERE token = ? AND expiresAt > CURRENT_TIMESTAMP`
+func (m *SessionModel) GetUserIDByToken(token string) (int, error) {
+	var userID int
+	stmt := `SELECT user_id FROM Sessions WHERE token = ? AND expiresAt > CURRENT_TIMESTAMP`
 
-    err := m.DB.QueryRow(stmt, token).Scan(&userID)
-    if err != nil {
-        if errors.Is(err, sql.ErrNoRows) {
-            return 0, errors.New("session not found or expired")
-        }
-        return 0, err
-    }
+	err := m.DB.QueryRow(stmt, token).Scan(&userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, errors.New("session not found or expired")
+		}
+		return 0, err
+	}
 
-    return userID, nil
+	return userID, nil
 }
 
 func (m *SessionModel) DeleteByToken(token string) error {
-    stmt := `DELETE FROM Sessions WHERE token = ?`
+	stmt := `DELETE FROM Sessions WHERE token = ?`
 
-    _, err := m.DB.Exec(stmt, token)
-    if err != nil {
-        return err
-    }
+	_, err := m.DB.Exec(stmt, token)
+	if err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }

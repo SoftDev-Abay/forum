@@ -7,19 +7,21 @@ import (
 )
 
 type PostsModelInterface interface {
-	Insert(title string, content string, imgUrl string, createdAt time.Time, categoryID uint, ownerID uint) (int, error)
+	Insert(title string, content string, imgUrl string, createdAt time.Time, categoryID int, ownerID int) (int, error)
 	Get(id int) (*Posts, error)
 	Latest() ([]*Posts, error)
+	GetPostsByUserID(userID int) ([]*Posts, error)
+	UpdatePostLikeDislikeCounts(postID int, likeCount int, dislikeCount int) error
 }
 
 type Posts struct {
-	ID           uint
+	ID           int
 	Title        string
 	Content      string
 	ImgUrl       string
 	CreatedAt    time.Time
-	CategoryID   uint
-	OwnerID      uint
+	CategoryID   int
+	OwnerID      int
 	LikeCount    int
 	DislikeCount int
 	IsLiked      bool // Tracks whether the logged-in user has liked the post
@@ -31,7 +33,7 @@ type PostModel struct {
 	PostReactionsModel *PostReactionsModel // Inject PostReactionsModel into PostModel
 }
 
-func (m *PostModel) Insert(title string, content string, imgUrl string, createdAt time.Time, categoryID uint, ownerID uint) (int, error) {
+func (m *PostModel) Insert(title string, content string, imgUrl string, createdAt time.Time, categoryID int, ownerID int) (int, error) {
 	stmt := `INSERT INTO Posts (title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count)
 	         VALUES (?, ?, ?, ?, ?, ?, 0, 0)`
 
@@ -99,25 +101,44 @@ func (m *PostModel) Latest() ([]*Posts, error) {
 	return posts, nil
 }
 
-
 // updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
-func (m *PostModel) updatePostLikeDislikeCounts(postID uint) error {
-	likes, err := m.PostReactionsModel.GetReactionCount(postID, "like")
-	if err != nil {
-		return err
-	}
-
-	dislikes, err := m.PostReactionsModel.GetReactionCount(postID, "dislike")
-	if err != nil {
-		return err
-	}
-
+func (m *PostModel) UpdatePostLikeDislikeCounts(postID int, likeCount int, dislikeCount int) error {
 	// Update the post's like/dislike counts in the database
 	stmt := `UPDATE Posts SET like_count = ?, dislike_count = ? WHERE id = ?`
-	_, err = m.DB.Exec(stmt, likes, dislikes, postID)
+	_, err := m.DB.Exec(stmt, likeCount, dislikeCount, postID)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (m *PostModel) GetPostsByUserID(userID int) ([]*Posts, error) {
+	stmt := `SELECT id, title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count
+			FROM Posts 
+			WHERE owner_id = ?
+			ORDER BY createdAt ASC`
+
+	rows, err := m.DB.Query(stmt, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []*Posts
+
+	for rows.Next() {
+		post := &Posts{}
+		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt, &post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }
