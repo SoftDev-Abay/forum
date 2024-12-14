@@ -25,6 +25,18 @@
     </div>
 </div>
 
+<div class="snippet">
+    <div class="metadata">
+        <strong>Comments {{.CommentsNum}}</strong>
+        <form action="/post/comment?id={{.ID}}" method="POST">
+            <input type="text" name="comment" value=""/>
+            <span><input type="submit" name="submit" value ="Send" /></span>
+        </form>
+    </div>
+    <div class="metadata">
+    </div>
+</div>
+
 <br>
 
 {{end}}
