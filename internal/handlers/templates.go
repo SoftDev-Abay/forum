@@ -20,6 +20,7 @@ type templateData struct {
 	Comments        []*models.Comments
 	CommentsNum     int
 	User            *models.User
+	PostReaction    *models.PostReaction
 }
 
 var functions = template.FuncMap{

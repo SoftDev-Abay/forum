@@ -18,6 +18,6 @@ func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 	var data templateData
 
 	data.Posts = posts
-
+	
 	app.render(w, r, http.StatusOK, "home.html", data)
 }
