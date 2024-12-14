@@ -35,6 +35,10 @@ func (app *Application) render(w http.ResponseWriter, r *http.Request, status in
 	userID, err := app.getAuthenticatedUserID(r)
 	if err == nil && userID > 0 {
 		data.IsAuthenticated = true
+		data.User, err = app.Users.GetById(userID)
+		if err != nil {
+			app.serverError(w, r, err)
+		}
 	} else {
 		data.IsAuthenticated = false
 	}

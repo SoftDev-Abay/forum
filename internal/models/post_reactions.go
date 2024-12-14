@@ -16,6 +16,7 @@ type PostReactionModelInterface interface {
 	DeleteReaction(userID int, postID int) error
 	GetReaction(userID int, postID int) (*PostReaction, error)
 	GetReactionCount(postID int, reactionType string) (int, error)
+	GetReactionByUserID(userID int) (*PostReaction, error)
 }
 
 type PostReaction struct {
@@ -108,6 +109,25 @@ func (m *PostReactionsModel) GetReaction(userID int, postID int) (*PostReaction,
 	return &PostReaction{
 		UserID: userID,
 		PostID: postID,
+		Type:   reactionType,
+	}, nil
+}
+
+func (m *PostReactionsModel) GetReactionByUserID(userID int) (*PostReaction, error) {
+	stmt := `SELECT type FROM Post_Reactions WHERE user_id = ?`
+	row := m.DB.QueryRow(stmt, userID)
+
+	var reactionType string
+	err := row.Scan(&reactionType)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNoReaction
+		}
+		return nil, err
+	}
+
+	return &PostReaction{
+		UserID: userID,
 		Type:   reactionType,
 	}, nil
 }
