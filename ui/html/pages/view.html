@@ -25,8 +25,27 @@
     </div>
 </div>
 
+{{end}}
+
+
+<form action="/post/create/post" method="post">
+
+
+
+    <div class="form-group">
+        <label for="content">Add comment:</label><br>
+        <textarea class="textarea-add-comment" id="content" name="content" rows="5" cols="80" required></textarea><br><br>
+    </div>
+
+    <input type="submit" value="Add">
+</form>
+
 <ul id="comments-list" class="comments-list">
 
+
+
+
+{{range .Comments}}
 <li>
     <div class="comment-main-level">
         <!-- Avatar -->
@@ -34,21 +53,36 @@
         <!-- Contenedor del Comentario -->
         <div class="comment-box">
             <div class="comment-head">
-                <h6 class="comment-name"><a href="http://creaticode.com/blog">Lorena Rojero</a></h6>
-                <span>hace 10 minutos</span>
-                <i class="fa fa-reply"></i>
-                <i class="fa fa-heart"></i>
+                <h6 class="comment-name"><a href="http://creaticode.com/blog">User ID: {{.UserID}}</a></h6>
+                <span>{{.CreatedAt}}</span>
+                <!-- <i class="fa fa-reply"></i> -->
+
+                <form action="/post/reaction?id={{.ID}}" method="POST" style="display:inline;">
+                    <button class="reaction-button" type="submit" name="reaction" value="like">
+                        <i class="fa fa-thumbs-up {{if .IsLiked}}green{{else}}no-color{{end}}"></i>
+                        {{.LikeCount}}
+                    </button>
+                </form>
+                <form action="/post/reaction?id={{.ID}}" method="POST" style="display:inline;">
+                    <button class="reaction-button" type="submit" name="reaction" value="dislike">
+                        <i class="fa fa-thumbs-down {{if .IsDisliked}}red{{else}}no-color{{end}}"></i>
+                        {{.DislikeCount}}
+                    </button>
+                </form>
+
             </div>
             <div class="comment-content">
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Velit omnis animi et iure laudantium vitae, praesentium optio, sapiente distinctio illo?
+                {{.Text}}
             </div>
         </div>
     </div>
 </li>
+{{end}}
+
+
 
 </ul>
 
 <br>
 
-{{end}}
 {{end}}

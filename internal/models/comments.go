@@ -1,6 +1,9 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+	"time"
+)
 
 type CommentsModelInterface interface {
 	Insert(postID int, userID int, text string) (int, error)
@@ -14,6 +17,7 @@ type Comments struct {
 	Text        string
 	LikeCount   int
 	DislikeCout int
+	CreatedAt   time.Time
 }
 
 type CommentsModel struct {
@@ -21,8 +25,8 @@ type CommentsModel struct {
 }
 
 func (m *CommentsModel) Insert(postID int, userID int, text string) (int, error) {
-	stmt := `INSERT INTO Comments (post_id, user_id, text)
-	VALUES (?, ?, ?)`
+	stmt := `INSERT INTO Comments (post_id, user_id, text, like_count, dislike_count)
+	VALUES (?, ?, ?, 0, 0)`
 
 	result, err := m.DB.Exec(stmt, postID, userID, text)
 	if err != nil {
@@ -37,13 +41,13 @@ func (m *CommentsModel) Insert(postID int, userID int, text string) (int, error)
 	return int(id), nil
 }
 
-func (m *CommentsModel) GetAllByPostID(postID int) ([]*Comments, error) {
-	stmt := `SELECT id, post_id, user_id, text 
+func (m *CommentsModel) GetAllByPostID(UserID int) ([]*Comments, error) {
+	stmt := `SELECT id, post_id, user_id, text, like_count, dislike_count, created_at
 			FROM Comments
 			WHERE post_id = ?
 			ORDER BY created_at ASC`
 
-	rows, err := m.DB.Query(stmt)
+	rows, err := m.DB.Query(stmt, UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +57,7 @@ func (m *CommentsModel) GetAllByPostID(postID int) ([]*Comments, error) {
 
 	for rows.Next() {
 		comment := &Comments{}
-		err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Text, &comment.LikeCount, &comment.DislikeCout)
+		err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Text, &comment.LikeCount, &comment.DislikeCout, &comment.CreatedAt)
 		if err != nil {
 			return nil, err
 		}

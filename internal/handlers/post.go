@@ -84,10 +84,17 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	comments, err := app.Comments.GetAllByPostID(id)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	// Render the post with its reactions
 	data := templateData{
 		Category: category,
 		Post:     post,
+		Comments: comments,
 	}
 
 	app.render(w, r, http.StatusOK, "view.html", data)
