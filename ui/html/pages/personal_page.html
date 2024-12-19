@@ -9,8 +9,9 @@
     </div>
 </div>
 <br>
+
 <h2>My Posts</h2>
-{{if .Posts}}
+{{if .Posts}}  <!-- Start condition for posts -->
 <table>
 <tr>
 <th>Title</th>
@@ -26,17 +27,17 @@
 </tr>
 {{end}}
 </table>
-
+{{end}}  <!-- End condition for posts -->
 
 <h2>Liked Posts</h2>
-{{if .Posts}}
+{{if .LikedPosts}}  <!-- Assuming LikedPosts is a separate field from Posts -->
 <table>
 <tr>
 <th>Title</th>
 <th>Created</th>
 <th>ID</th>
 </tr>
-{{range .Posts}}
+{{range .LikedPosts}}
 <tr>
 <!-- Use the new clean URL style-->
 <td><a href='/post/view?id={{.ID}}'>{{.Title}}</a></td>
@@ -45,7 +46,6 @@
 </tr>
 {{end}}
 </table>
+{{end}}  <!-- End condition for liked posts -->
 
-
-{{end}}
-{{end}}
+{{end}}  <!-- End main block -->

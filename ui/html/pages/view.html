@@ -25,16 +25,17 @@
     </div>
 </div>
 
-{{end}}
 
 
-<form action="/post/create/post" method="post">
 
+<form action="/comments/create" method="post">
 
+    <input type="hidden" name="postId" value="{{.ID}}"  >
+    
 
     <div class="form-group">
         <label for="content">Add comment:</label><br>
-        <textarea class="textarea-add-comment" id="content" name="content" rows="5" cols="80" required></textarea><br><br>
+        <textarea class="textarea-add-comment" id="content" name="text" rows="5" cols="80" required></textarea><br><br>
     </div>
 
     <input type="submit" value="Add">
@@ -43,7 +44,7 @@
 <ul id="comments-list" class="comments-list">
 
 
-
+{{end}}
 
 {{range .Comments}}
 <li>
@@ -57,13 +58,13 @@
                 <span>{{.CreatedAt}}</span>
                 <!-- <i class="fa fa-reply"></i> -->
 
-                <form action="/post/reaction?id={{.ID}}" method="POST" style="display:inline;">
+                <form action="/comments/reaction?id={{.ID}}" method="POST" style="display:inline;">
                     <button class="reaction-button" type="submit" name="reaction" value="like">
                         <i class="fa fa-thumbs-up {{if .IsLiked}}green{{else}}no-color{{end}}"></i>
                         {{.LikeCount}}
                     </button>
                 </form>
-                <form action="/post/reaction?id={{.ID}}" method="POST" style="display:inline;">
+                <form action="/comments/reaction?id={{.ID}}" method="POST" style="display:inline;">
                     <button class="reaction-button" type="submit" name="reaction" value="dislike">
                         <i class="fa fa-thumbs-down {{if .IsDisliked}}red{{else}}no-color{{end}}"></i>
                         {{.DislikeCount}}

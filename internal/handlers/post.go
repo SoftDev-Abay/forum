@@ -25,8 +25,6 @@ type PostForm struct {
 }
 
 func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("post view accessed ")
-
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
 		app.notFound(w, r)
@@ -84,7 +82,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	comments, err := app.Comments.GetAllByPostID(id)
+	comments, err := app.Comments.GetAllByPostIdAndUserId(userID, id)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
