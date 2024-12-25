@@ -21,12 +21,12 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
 	mux.HandleFunc("/", app.home)
 	mux.HandleFunc("/post/view", app.postView)
-	mux.HandleFunc("/post/reaction", app.handlePostReaction)
+	mux.Handle("/post/reaction", app.loginMiddware(http.HandlerFunc(app.handlePostReaction)))
 
 	mux.Handle("/post/create/post", app.loginMiddware(http.HandlerFunc(app.postCreatePost)))
 	mux.Handle("/post/create", app.loginMiddware(http.HandlerFunc(app.postCreate)))
-	mux.Handle("/comments/create", app.loginMiddware(http.HandlerFunc(app.createComment)))
-	mux.HandleFunc("/comments/reaction", app.handleCommentReaction)
+	mux.Handle("/comments/create", app.loginMiddware(http.HandlerFunc(app.createCommentPost)))
+	mux.Handle("/comments/reaction", app.loginMiddware(http.HandlerFunc(app.handleCommentReaction)))
 	mux.Handle("/personal-page", app.loginMiddware(http.HandlerFunc(app.personalPage)))
 
 	mux.HandleFunc("/register", app.register)

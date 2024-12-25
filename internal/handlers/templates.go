@@ -22,11 +22,15 @@ type templateData struct {
 	CommentsNum     int
 	User            *models.User
 	PostReaction    *models.PostReaction
-    CurrentPage   int
-    TotalPages    int
-    CurrentCatID  int
-    VisiblePages  []int
-    PageSize      int
+	CurrentPage     int
+	TotalPages      int
+	CurrentCatID    int
+	VisiblePages    []int
+	PageSize        int
+
+	// ERROR FIELDS:
+	ErrorCode int
+	ErrorMsg  string
 }
 
 var functions = template.FuncMap{
@@ -49,6 +53,7 @@ func NewTemplateCache() (map[string]*template.Template, error) {
 
 		patterns := []string{
 			"html/base.html",
+			"html/error_base.html",
 			"html/partials/*.html",
 			page,
 		}
@@ -79,6 +84,7 @@ func add(a, b int) int {
 func sub(a, b int) int {
 	return a - b
 }
+
 func slice(nums ...int) []int {
 	return nums
 }

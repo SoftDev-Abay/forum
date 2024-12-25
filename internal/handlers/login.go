@@ -24,6 +24,11 @@ type loginForm struct {
 }
 
 func (app *Application) login(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+
 	data := templateData{}
 
 	data.Form = loginForm{}
@@ -32,9 +37,14 @@ func (app *Application) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+
 	err := r.ParseForm()
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 
@@ -154,6 +164,11 @@ func getUserInfoFromCookie(r *http.Request) (*UserInfo, error) {
 }
 
 func (app *Application) logout(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+
 	tokenCookie, err := r.Cookie("token")
 	if err != nil || tokenCookie.Value == "" {
 		http.Redirect(w, r, "/", http.StatusSeeOther)

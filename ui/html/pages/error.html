@@ -1,0 +1,8 @@
+<!-- error.html -->
+{{define "title"}}Error {{.ErrorCode}}{{end}}
+
+{{define "main"}}
+<h2>{{.ErrorCode}}</h2>
+<h3>{{.ErrorMsg}}</h3>
+<h3>Try our <a href="/">homepage</a> instead</h3>
+{{end}}

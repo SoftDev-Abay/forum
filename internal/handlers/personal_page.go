@@ -6,6 +6,11 @@ import (
 )
 
 func (app *Application) personalPage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+	
 	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
 		app.notAuthenticated(w, r)
