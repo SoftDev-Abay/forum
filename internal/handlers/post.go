@@ -27,14 +27,14 @@ type PostForm struct {
 }
 
 func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
-	if err != nil || id < 1 {
-		app.notFound(w, r)
+	if r.Method != http.MethodGet {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
 		return
 	}
 
-	if id < 0 {
-		app.clientError(w, http.StatusBadRequest)
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil ||  id < 1 {
+		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 
@@ -102,7 +102,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 
 func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		app.clientError(w, http.StatusMethodNotAllowed)
+		app.clientError(w, r, http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -121,13 +121,15 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+
 	// Parse the multipart form (allow up to ~20 MB in memory; adjust if needed).
 	err := r.ParseMultipartForm(20 << 20) // 20 MB
 	if err != nil {
-		fmt.Println("Erro on parse")
-
-		app.clientError(w, http.StatusBadRequest)
-		fmt.Println(err)
+		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 
@@ -234,6 +236,7 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 		// Assign new file name to store in DB
 		imgUrl = newFileName
 	}
+		defer dst.Close()
 
 	// 6) Insert post in the DB using `imgUrl`
 	postID, err := app.Posts.Insert(title, content, imgUrl, time.Now(), categoryID, userId)
@@ -247,18 +250,22 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
 	// Get the post ID from the query parameters
 	postIDStr := r.URL.Query().Get("id")
 	postID, err := strconv.Atoi(postIDStr)
 	if err != nil || postID < 1 {
-		app.clientError(w, http.StatusBadRequest)
+		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 
 	// Get the reaction type (like or dislike) from the form
 	reaction := r.FormValue("reaction")
 	if reaction != "like" && reaction != "dislike" {
-		app.clientError(w, http.StatusBadRequest)
+		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 

@@ -15,6 +15,11 @@ type registerForm struct {
 }
 
 func (app *Application) register(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+
 	data := templateData{}
 
 	data.Form = registerForm{}
@@ -23,9 +28,14 @@ func (app *Application) register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) registerPost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+
 	err := r.ParseForm()
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 
@@ -91,5 +101,5 @@ func (app *Application) registerPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

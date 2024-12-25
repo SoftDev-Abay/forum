@@ -10,12 +10,15 @@ import (
 	// "game-forum-abaliyev-ashirbay/internal/models"
 )
 
-func (app *Application) createComment(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Comment create accessed")
+func (app *Application) createCommentPost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
 
 	err := r.ParseForm()
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 
@@ -46,40 +49,41 @@ func (app *Application) createComment(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
 	// Get the comment ID from the query parameters
 	err := r.ParseForm()
 	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
+		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
-	
+
 	commentIDStr := r.URL.Query().Get("id")
 	commentID, err := strconv.Atoi(commentIDStr)
 	if err != nil || commentID < 1 {
 		fmt.Println("Error: Invalid comment ID or comment ID less than 1")
-		app.clientError(w, http.StatusBadRequest)
+		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 	fmt.Println("Comment ID:", commentID)
 
-
-
 	postId, err := strconv.Atoi(r.PostForm.Get("postId"))
 	if err != nil || postId < 1 {
 		fmt.Println("error tut :")
-		
+
 		fmt.Println(err)
 		app.notFound(w, r)
 		return
 	}
 	fmt.Println("postId ID:", postId)
 
-
 	// Get the reaction type (like or dislike) from the form
 	reaction := r.FormValue("reaction")
 	if reaction != "like" && reaction != "dislike" {
 		fmt.Println("Error: Invalid reaction type:", reaction)
-		app.clientError(w, http.StatusBadRequest)
+		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 	fmt.Println("Reaction type:", reaction)
@@ -187,10 +191,8 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 	}
 	fmt.Println("Successfully updated comment like/dislike counts.")
 
-
 	// After updating, redirect to the comment view to update the UI
 	redirectURL := fmt.Sprintf("/post/view?id=%d", postId)
 	fmt.Println("Redirecting to:", redirectURL)
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
-
 }

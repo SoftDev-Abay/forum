@@ -22,16 +22,31 @@ func (app *Application) serverError(w http.ResponseWriter, r *http.Request, err 
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-func (app *Application) clientError(w http.ResponseWriter, status int) {
-	http.Error(w, http.StatusText(status), status)
+func (app *Application) clientError(w http.ResponseWriter, r *http.Request, status int) {
+	data := templateData{
+		ErrorCode: status,
+		ErrorMsg:  http.StatusText(status),
+	}
+
+	app.render(w, r, status, "error.html", data)
 }
 
 func (app *Application) notFound(w http.ResponseWriter, r *http.Request) {
-	http.NotFound(w, r)
+	data := templateData{
+		ErrorCode: http.StatusNotFound,
+		ErrorMsg:  http.StatusText(http.StatusNotFound),
+	}
+
+	app.render(w, r, http.StatusNotFound, "error.html", data)
 }
 
 func (app *Application) notAuthenticated(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(401)
+	data := templateData{
+		ErrorCode: http.StatusUnauthorized,
+		ErrorMsg:  "You must be logged in to access this page.",
+	}
+
+	app.render(w, r, http.StatusUnauthorized, "error.html", data)
 }
 
 func (app *Application) render(w http.ResponseWriter, r *http.Request, status int, page string, data templateData) {
@@ -55,7 +70,12 @@ func (app *Application) render(w http.ResponseWriter, r *http.Request, status in
 
 	buf := new(bytes.Buffer)
 
-	err = ts.ExecuteTemplate(buf, "base", data)
+	if page == "error.html" {
+		err = ts.ExecuteTemplate(buf, "error_base", data)
+	} else {
+		err = ts.ExecuteTemplate(buf, "base", data)
+	}
+
 	if err != nil {
 		app.serverError(w, r, err)
 		return
