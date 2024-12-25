@@ -15,6 +15,8 @@ type PostsModelInterface interface {
 	GetPostsByUserID(userID int) ([]*Posts, error)
 	UpdatePostLikeDislikeCounts(postID int, likeCount int, dislikeCount int) error
 	GetPostsByIDs(postIDs []int) ([]*Posts, error)
+	GetFilteredPosts(categoryID, page, pageSize int) ([]*Posts, error)
+	CountPosts(categoryID int) (int, error)
 }
 
 type Posts struct {
@@ -188,4 +190,83 @@ func (m *PostModel) GetPostsByIDs(postIDs []int) ([]*Posts, error) {
 	}
 
 	return posts, nil
+}
+
+
+func (m *PostModel) GetFilteredPosts(categoryID, page, pageSize int) ([]*Posts, error) {
+    if page < 1 {
+        page = 1
+    }
+    offset := (page - 1) * pageSize
+
+    // Base query
+    query := `
+        SELECT id, title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count
+        FROM Posts
+    `
+    var args []interface{}
+    var whereClauses []string
+
+    // If filtering by category
+    if categoryID > 0 {
+        whereClauses = append(whereClauses, "category_id = ?")
+        args = append(args, categoryID)
+    }
+
+    // If we have any WHERE clauses, add them
+    if len(whereClauses) > 0 {
+        query += " WHERE " + strings.Join(whereClauses, " AND ")
+    }
+
+    query += ` ORDER BY createdAt DESC`
+    query += ` LIMIT ? OFFSET ?`
+    args = append(args, pageSize, offset)
+
+    rows, err := m.DB.Query(query, args...)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var posts []*Posts
+    for rows.Next() {
+        post := &Posts{}
+        err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt,
+            &post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount)
+        if err != nil {
+            return nil, err
+        }
+        posts = append(posts, post)
+    }
+
+    if err = rows.Err(); err != nil {
+        return nil, err
+    }
+
+    return posts, nil
+}
+
+func (m *PostModel) CountPosts(categoryID int) (int, error) {
+    query := `SELECT COUNT(*) FROM Posts`
+    var args []interface{}
+    var whereClauses []string
+
+    // If filtering by category
+    if categoryID > 0 {
+        whereClauses = append(whereClauses, "category_id = ?")
+        args = append(args, categoryID)
+    }
+
+    // If we have any WHERE clauses, add them
+    if len(whereClauses) > 0 {
+        query += " WHERE " + strings.Join(whereClauses, " AND ")
+    }
+
+    var count int
+    err := m.DB.QueryRow(query, args...).Scan(&count)
+    if err != nil {
+        return 0, err
+    }
+
+    return count, nil
 }

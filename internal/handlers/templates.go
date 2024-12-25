@@ -22,10 +22,18 @@ type templateData struct {
 	CommentsNum     int
 	User            *models.User
 	PostReaction    *models.PostReaction
+    CurrentPage   int
+    TotalPages    int
+    CurrentCatID  int
+    VisiblePages  []int
+    PageSize      int
 }
 
 var functions = template.FuncMap{
 	"humanDate": humanDate,
+	"add":       add,
+	"sub":       sub,
+	"slice":     slice,
 }
 
 func NewTemplateCache() (map[string]*template.Template, error) {
@@ -62,4 +70,15 @@ func humanDate(t time.Time) string {
 	}
 
 	return t.UTC().Format("02 Jan 2006 at 15:04")
+}
+
+func add(a, b int) int {
+	return a + b
+}
+
+func sub(a, b int) int {
+	return a - b
+}
+func slice(nums ...int) []int {
+	return nums
 }

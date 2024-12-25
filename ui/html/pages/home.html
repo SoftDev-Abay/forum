@@ -1,23 +1,68 @@
 {{define "title"}}Home{{end}}
 {{define "main"}}
 <h2>Latest Posts</h2>
+
+<!-- Optional: Category filter -->
+<form action="/" method="GET" style="margin-bottom: 1rem;">
+    <label for="category">Category:</label>
+    <select name="category" id="category" onchange="this.form.submit()">
+        <option value="0" {{if eq .CurrentCatID 0}}selected{{end}}>All</option>
+        {{range .Categories}}
+            <option value="{{.ID}}" {{if eq $.CurrentCatID .ID}}selected{{end}}>{{.Name}}</option>
+        {{end}}
+    </select>
+
+    <!-- Page Size -->
+    <label for="pageSize">Posts per page:</label>
+    <select name="pageSize" id="pageSize" onchange="this.form.submit()">
+        {{range (slice 5 10 20 50)}}
+            <option value="{{.}}" {{if eq $.PageSize .}}selected{{end}}>{{.}}</option>
+        {{end}}
+    </select>
+
+    <!-- Keep the current page -->
+    <input type="hidden" name="page" value="{{.CurrentPage}}" />
+
+    <noscript><button type="submit">Filter</button></noscript>
+</form>
+
+<!-- Posts -->
 {{if .Posts}}
 <table>
-<tr>
-<th>Title</th>
-<th>Created</th>
-<th>ID</th>
-</tr>
-{{range .Posts}}
-<tr>
-<!-- Use the new clean URL style-->
-<td><a href='/post/view?id={{.ID}}'>{{.Title}}</a></td>
-<td>{{humanDate .CreatedAt}}</td>
-<td>#{{.ID}}</td>
-</tr>
-{{end}}
+    <tr>
+        <th>Title</th>
+        <th>Created</th>
+        <th>ID</th>
+    </tr>
+    {{range .Posts}}
+    <tr>
+        <td><a href='/post/view?id={{.ID}}'>{{.Title}}</a></td>
+        <td>{{humanDate .CreatedAt}}</td>
+        <td>#{{.ID}}</td>
+    </tr>
+    {{end}}
 </table>
 {{else}}
 <p>There's nothing to see here... yet!</p>
 {{end}}
+
+<!-- Pagination -->
+<div style="margin-top: 1rem;">
+    <!-- Prev Link -->
+    {{if gt .CurrentPage 1}}
+    <a href="/?page={{sub .CurrentPage 1}}&category={{.CurrentCatID}}&pageSize={{.PageSize}}">Prev</a>
+    {{end}}
+
+    <!-- Page Links -->
+    {{range .VisiblePages}}
+    <a href="/?page={{.}}&category={{$.CurrentCatID}}&pageSize={{$.PageSize}}" 
+       {{if eq . $.CurrentPage}}class="active"{{end}}>{{.}}</a>
+    {{end}}
+
+    <!-- Next Link -->
+    {{if lt .CurrentPage .TotalPages}}
+    <a href="/?page={{add .CurrentPage 1}}&category={{.CurrentCatID}}&pageSize={{.PageSize}}">Next</a>
+    {{end}}
+</div>
+
 {{end}}
