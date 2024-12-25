@@ -33,7 +33,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
-	if err != nil ||  id < 1 {
+	if err != nil || id < 1 {
 		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
@@ -236,7 +236,6 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 		// Assign new file name to store in DB
 		imgUrl = newFileName
 	}
-		defer dst.Close()
 
 	// 6) Insert post in the DB using `imgUrl`
 	postID, err := app.Posts.Insert(title, content, imgUrl, time.Now(), categoryID, userId)
