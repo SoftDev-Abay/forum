@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"game-forum-abaliyev-ashirbay/internal/models"
 	"game-forum-abaliyev-ashirbay/internal/validator"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
@@ -119,28 +121,57 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	// Parse the multipart form (allow up to ~20 MB in memory; adjust if needed).
+	err := r.ParseMultipartForm(20 << 20) // 20 MB
 	if err != nil {
+		fmt.Println("Erro on parse")
+
 		app.clientError(w, http.StatusBadRequest)
+		fmt.Println(err)
 		return
 	}
 
-	title := r.PostForm.Get("title")
-	categoryIDStr := r.PostForm.Get("category_id")
-	content := r.PostForm.Get("content")
+	title := r.FormValue("title")
+	categoryIDStr := r.FormValue("category_id")
+	content := r.FormValue("content")
 
+	// Retrieve the file from the form. The field name is "image".
+	file, header, imgErr := r.FormFile("image")
+	if imgErr != nil && imgErr != http.ErrMissingFile {
+		app.serverError(w, r, imgErr)
+		return
+	}
+	// We may have no file uploaded (http.ErrMissingFile), so handle that possibility below.
+	defer func() {
+		if file != nil {
+			file.Close()
+		}
+	}()
+
+	// Convert categoryID
 	categoryID, err := strconv.Atoi(categoryIDStr)
 	if err != nil || categoryID < 1 {
 		categoryID = 0
 	}
 
+	// Validation checks for title & content
 	form := PostForm{
 		Title:      title,
 		CategoryID: categoryID,
 		Content:    content,
 	}
-
 	v := validator.Validator{}
+
+	// 1) If user provided a file (not missing)
+	if imgErr != http.ErrMissingFile {
+		// 2) Validate file size (<= 20 MB)
+		const maxFileSize = 20 << 20 // 20 MB in bytes
+
+		v.CheckField(header.Size < maxFileSize, "image", "File too large: must be <= 20MB")
+
+		v.CheckField(isAllowedImageExt(header.Filename), "image", "Only .jpg, .png, or .gif files are allowed")
+
+	}
 
 	v.CheckField(validator.NotBlank(form.Title), "title", "Title must not be blank")
 	v.CheckField(validator.MaxChars(form.Title, 100), "title", "Title must not be more than 100 characters long")
@@ -151,8 +182,6 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 	v.CheckField(validator.NotBlank(form.Content), "content", "Content must not be blank")
 	v.CheckField(validator.MinChars(form.Content, 10), "content", "Content must be at least 10 characters long")
 
-	fmt.Println(form)
-
 	if !v.Valid() {
 		categories, err := app.Categories.GetAll()
 		if err != nil {
@@ -160,7 +189,6 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Println(categories)
 		data := templateData{
 			Form:       form,
 			FormErrors: v.FieldErrors,
@@ -174,14 +202,47 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 	userId, err := app.getAuthenticatedUserID(r)
 	if err != nil {
 		app.notAuthenticated(w, r)
+		return
 	}
 
-	postID, err := app.Posts.Insert(form.Title, form.Content, "", time.Now(), form.CategoryID, userId)
+	// Initialize imgUrl as empty string for the DB if user doesn't upload an image
+	imgUrl := ""
+
+	if imgErr != http.ErrMissingFile {
+
+		// 4) Generate random filename
+		newFileName, err := generateUniqueFileName(header.Filename)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		// 5) Save the file to ./data/imgs/<randomname>
+		dst, err := os.Create("./data/imgs/" + newFileName)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		defer dst.Close()
+
+		_, err = io.Copy(dst, file)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		// Assign new file name to store in DB
+		imgUrl = newFileName
+	}
+
+	// 6) Insert post in the DB using `imgUrl`
+	postID, err := app.Posts.Insert(title, content, imgUrl, time.Now(), categoryID, userId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
+	// Redirect to the newly created post
 	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postID), http.StatusSeeOther)
 }
 

@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path/filepath"
+	"strings"
 
+	"github.com/gofrs/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -87,4 +90,27 @@ func (app *Application) getAuthenticatedUserID(r *http.Request) (int, error) {
 	}
 
 	return userID, nil
+}
+
+func isAllowedImageExt(filename string) bool {
+	ext := strings.ToLower(filepath.Ext(filename))
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".gif":
+		return true
+	}
+	return false
+}
+
+func generateUniqueFileName(originalFilename string) (string, error) {
+	// Get file extension
+	ext := strings.ToLower(filepath.Ext(originalFilename))
+
+	// Create a UUIDv4
+	u, err := uuid.NewV4()
+	if err != nil {
+		return "", err
+	}
+
+	// Return <UUID> + extension, e.g., "6ec29...-4ea2-86b1-...ab.png"
+	return u.String() + ext, nil
 }

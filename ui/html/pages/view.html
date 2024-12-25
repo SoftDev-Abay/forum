@@ -7,7 +7,10 @@
         <strong>{{.Title}}</strong>
         <span>#{{.ID}}</span>
     </div>
+    <img src="http://localhost:4000/imgs/{{.ImgUrl}}" alt="Post image" />
+
     <pre><code>{{.Content}}</code></pre>
+
     <div class='metadata'>
         <!-- Like and Dislike counts are clickable (submit via form) -->
         <form action="/post/reaction?id={{.ID}}" method="POST" style="display:inline;">

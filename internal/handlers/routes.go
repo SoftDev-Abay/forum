@@ -19,6 +19,10 @@ func (app *Application) Routes() http.Handler {
 	fileServer := http.FileServer(http.FS(staticFiles))
 
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
+
+	// Serve /imgs/<filename> from ./data/imgs
+	mux.Handle("/imgs/", http.StripPrefix("/imgs/", http.FileServer(http.Dir("./data/imgs"))))
+
 	mux.HandleFunc("/", app.home)
 	mux.HandleFunc("/post/view", app.postView)
 	mux.HandleFunc("/post/reaction", app.handlePostReaction)

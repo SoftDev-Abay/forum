@@ -1,7 +1,7 @@
 {{define "title"}} Create Post {{end}}
 {{define "main"}}
 <h2>Create a New Post</h2>
-<form action="/post/create/post" method="post">
+<form action="/post/create/post" method="post" enctype="multipart/form-data">
 
     <div class="form-group">
         <label for="title">Title:</label><br>
@@ -31,6 +31,18 @@
         <label class='error'>{{.}}</label>
         {{end}}
         <textarea id="content" name="content" rows="10" cols="80" required></textarea><br><br>
+    </div>
+
+
+    <!-- New file input -->
+    <div class="form-group">
+
+
+        <label for="image">Image:</label><br>
+        {{with .FormErrors.image}}
+        <label class='error'>{{.}}</label>
+        {{end}}
+        <input type="file" id="image" name="image" accept="image/*"><br><br>
     </div>
 
     <input type="submit" value="Submit">
