@@ -10,7 +10,6 @@ import (
 	// "game-forum-abaliyev-ashirbay/internal/models"
 )
 
-
 func (app *Application) createComment(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Comment create accessed")
 
@@ -31,19 +30,29 @@ func (app *Application) createComment(w http.ResponseWriter, r *http.Request) {
 	userId, err := app.getAuthenticatedUserID(r)
 	if err != nil {
 		app.notAuthenticated(w, r)
+		return
 	}
 
 	_, err = app.Comments.Insert(postId, userId, text, time.Now())
-	// commentId, err := app.Comments.Insert(postId, userId, text)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
 	fmt.Println("Comment created successfully")
+
+	// Redirect to the post view page
+	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postId), http.StatusSeeOther)
 }
+
 func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Request) {
 	// Get the comment ID from the query parameters
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	
 	commentIDStr := r.URL.Query().Get("id")
 	commentID, err := strconv.Atoi(commentIDStr)
 	if err != nil || commentID < 1 {
@@ -52,6 +61,19 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 		return
 	}
 	fmt.Println("Comment ID:", commentID)
+
+
+
+	postId, err := strconv.Atoi(r.PostForm.Get("postId"))
+	if err != nil || postId < 1 {
+		fmt.Println("error tut :")
+		
+		fmt.Println(err)
+		app.notFound(w, r)
+		return
+	}
+	fmt.Println("postId ID:", postId)
+
 
 	// Get the reaction type (like or dislike) from the form
 	reaction := r.FormValue("reaction")
@@ -165,8 +187,10 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 	}
 	fmt.Println("Successfully updated comment like/dislike counts.")
 
+
 	// After updating, redirect to the comment view to update the UI
-	redirectURL := fmt.Sprintf("/comment/view?id=%d", commentID)
+	redirectURL := fmt.Sprintf("/post/view?id=%d", postId)
 	fmt.Println("Redirecting to:", redirectURL)
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+
 }

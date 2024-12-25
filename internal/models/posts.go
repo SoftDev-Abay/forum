@@ -3,6 +3,8 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -12,6 +14,7 @@ type PostsModelInterface interface {
 	Latest() ([]*Posts, error)
 	GetPostsByUserID(userID int) ([]*Posts, error)
 	UpdatePostLikeDislikeCounts(postID int, likeCount int, dislikeCount int) error
+	GetPostsByIDs(postIDs []int) ([]*Posts, error)
 }
 
 type Posts struct {
@@ -136,6 +139,50 @@ func (m *PostModel) GetPostsByUserID(userID int) ([]*Posts, error) {
 		posts = append(posts, post)
 	}
 
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
+func (m *PostModel) GetPostsByIDs(postIDs []int) ([]*Posts, error) {
+	if len(postIDs) == 0 {
+		// No liked post IDs, just return empty slice.
+		return []*Posts{}, nil
+	}
+
+	// Build dynamic placeholders like (?, ?, ?) for the SQL IN clause.
+	placeholders := make([]string, len(postIDs))
+	args := make([]interface{}, len(postIDs))
+	for i, id := range postIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	query := fmt.Sprintf(`
+        SELECT id, title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count
+        FROM Posts
+        WHERE id IN (%s)
+        ORDER BY createdAt ASC
+    `, strings.Join(placeholders, ", "))
+
+	rows, err := m.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []*Posts
+	for rows.Next() {
+		post := &Posts{}
+		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt,
+			&post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}

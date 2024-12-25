@@ -17,6 +17,7 @@ type PostReactionModelInterface interface {
 	GetReaction(userID int, postID int) (*PostReaction, error)
 	GetReactionCount(postID int, reactionType string) (int, error)
 	GetReactionByUserID(userID int) (*PostReaction, error)
+	GetLikedPostIDsByUserID(userID int) ([]int, error)
 }
 
 type PostReaction struct {
@@ -141,4 +142,27 @@ func (m *PostReactionsModel) GetReactionCount(postID int, reactionType string) (
 		return 0, err
 	}
 	return count, nil
+}
+
+func (m *PostReactionsModel) GetLikedPostIDsByUserID(userID int) ([]int, error) {
+	stmt := `SELECT post_id FROM Post_Reactions WHERE user_id = ? AND type = 'like'`
+	rows, err := m.DB.Query(stmt, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var postIDs []int
+	for rows.Next() {
+		var postID int
+		if err := rows.Scan(&postID); err != nil {
+			return nil, err
+		}
+		postIDs = append(postIDs, postID)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return postIDs, nil
 }

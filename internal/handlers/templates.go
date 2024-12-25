@@ -15,6 +15,7 @@ type templateData struct {
 	Categories      []*models.Categories
 	Category        *models.Categories
 	Posts           []*models.Posts
+	LikedPosts      []*models.Posts
 	IsAuthenticated bool
 	Post            *models.Posts
 	Comments        []*models.Comments
