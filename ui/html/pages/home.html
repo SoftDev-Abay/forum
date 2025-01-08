@@ -32,6 +32,9 @@
     <tr>
         <th>Title</th>
         <th>Created</th>
+        {{if .User.}}
+        <th>Action</th>
+        {{end}}
         <th>ID</th>
     </tr>
     {{range .Posts}}
