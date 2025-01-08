@@ -372,3 +372,87 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 	// After updating, redirect to the post view to update the UI
 	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postID), http.StatusSeeOther)
 }
+
+func (app *Application) postDelete(w http.ResponseWriter, r *http.Request) {
+	// Only allow POST (or possibly DELETE, if you are using REST conventions).
+	if r.Method != http.MethodPost {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the `id` from the query parameters (e.g. /post/delete?id=123).
+	idStr := r.URL.Query().Get("id")
+	postID, err := strconv.Atoi(idStr)
+	if err != nil || postID < 1 {
+		app.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	// (Optional) Check if the user is authenticated and/or is allowed to delete the post.
+	_, err = app.getAuthenticatedUserID(r)
+	if err != nil {
+		app.notAuthenticated(w, r)
+		return
+	}
+
+	// Retrieve the post to get the image URL
+	post, err := app.Posts.Get(postID)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w, r)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+
+	err = app.PostReactions.DeleteReactionsByPostId(postID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// 1) Get all comments for the post
+	comments, err := app.Comments.GetAllByPostId(postID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// 2) For each comment, delete associated comment reactions
+	for _, comment := range comments {
+		err = app.CommentsReactions.DeleteReactioByCommentId(comment.ID)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+	}
+
+	// 3) Delete all comments for the post
+	err = app.Comments.DeleteCommentsByPostId(postID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// 4) Finally, delete the post itself
+	err = app.Posts.DeletePostById(postID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// If the post has an image, delete the image file
+	if post.ImgUrl != "" {
+		imagePath := "./data/imgs/" + post.ImgUrl
+		err = os.Remove(imagePath)
+		if err != nil && !os.IsNotExist(err) {
+			// Log the error but don't fail the request
+			fmt.Printf("Error deleting image file: %s, error: %v\n", imagePath, err)
+		}
+	}
+
+	// Redirect or respond with success
+	// e.g., redirect to homepage or back to some list:
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}

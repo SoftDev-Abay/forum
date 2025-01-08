@@ -12,6 +12,7 @@ type CommentsReactionsModelInterface interface {
 	GetReaction(userID int, CommentID int) (*CommentsReactions, error)
 	GetReactionCount(CommentID int, reactionType string) (int, error)
 	GetReactionByUserID(userID int) (*CommentsReactions, error)
+	DeleteReactioByCommentId(CommentID int) error
 }
 
 type CommentsReactions struct {
@@ -136,4 +137,15 @@ func (m *CommentsReactionsModel) GetReactionCount(CommentID int, reactionType st
 		return 0, err
 	}
 	return count, nil
+}
+
+
+// DeleteReaction removes a reaction (like or dislike) from a user on a post
+func (m *CommentsReactionsModel) DeleteReactioByCommentId(CommentID int) error {
+	stmt := `DELETE FROM Comment_Reactions WHERE comment_id = ?`
+	_, err := m.DB.Exec(stmt,  CommentID)
+	if err != nil {
+		return err
+	}
+	return nil
 }

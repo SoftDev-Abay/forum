@@ -29,6 +29,8 @@ func (app *Application) Routes() http.Handler {
 
 	mux.Handle("/post/create/post", app.loginMiddware(http.HandlerFunc(app.postCreatePost)))
 	mux.Handle("/post/create", app.loginMiddware(http.HandlerFunc(app.postCreate)))
+	mux.Handle("/post/delete", app.loginMiddware(http.HandlerFunc(app.postDelete)))
+
 	mux.Handle("/comments/create", app.loginMiddware(http.HandlerFunc(app.createCommentPost)))
 	mux.Handle("/comments/reaction", app.loginMiddware(http.HandlerFunc(app.handleCommentReaction)))
 	mux.Handle("/personal-page", app.loginMiddware(http.HandlerFunc(app.personalPage)))

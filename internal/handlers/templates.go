@@ -18,7 +18,7 @@ type templateData struct {
 	LikedPosts      []*models.Posts
 	IsAuthenticated bool
 	Post            *models.Posts
-	Comments        []*models.Comments
+	Comments        []*models.CommentReaction
 	CommentsNum     int
 	User            *models.User
 	PostReaction    *models.PostReaction

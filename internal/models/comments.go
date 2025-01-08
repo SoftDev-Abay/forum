@@ -8,36 +8,42 @@ import (
 
 type CommentsModelInterface interface {
 	Insert(postID int, userID int, text string, created_at time.Time) (int, error)
-	// GetAllByPostID(postID int) ([]*Comments, error)
-	GetAllByPostIdAndUserId(userId int, postId int) ([]*Comments, error)
-	UpdateCommentLikeDislikeCounts(commentID int, likeCount int, dislikeCount int) error 
-	Get(id int) (*Comments, error)
+	GetAllByPostIdAndUserId(userId int, postId int) ([]*CommentReaction, error)
+	UpdateCommentLikeDislikeCounts(commentID int, likeCount int, dislikeCount int) error
+	Get(id int) (*Comment, error)
+	DeleteCommentsByPostId(postID int) error
+	GetAllByPostId(postId int) ([]*Comment, error)
 }
 
-type Comments struct {
+type Comment struct {
 	ID           int
 	PostID       int
 	UserID       int
 	Text         string
 	LikeCount    int
 	DislikeCount int
-	CreatedAt    time.Time
-	IsLiked      bool
-	IsDisliked   bool
+	CreatedAt    time.Time}
+
+
+
+type CommentReaction struct {
+	Comment
+	IsLiked    bool
+	IsDisliked bool
 }
 
 type CommentsModel struct {
 	DB *sql.DB
 }
 
-func (m *CommentsModel) Get(id int) (*Comments, error) {
+func (m *CommentsModel) Get(id int) (*Comment, error) {
 	stmt := `SELECT id, post_id, user_id, text, like_count, dislike_count, created_at
 	         FROM Comments
 	         WHERE id = ?`
 
 	row := m.DB.QueryRow(stmt, id)
 
-	comment := &Comments{}
+	comment := &Comment{}
 
 	err := row.Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Text, &comment.LikeCount, &comment.DislikeCount, &comment.CreatedAt)
 	if err != nil {
@@ -68,38 +74,7 @@ func (m *CommentsModel) Insert(postID int, userID int, text string, created_at t
 	return int(id), nil
 }
 
-// func (m *CommentsModel) GetAllByPostID(postId int) ([]*Comments, error) {
-// 	stmt := `SELECT id, post_id, user_id, text, like_count, dislike_count, created_at
-// 			FROM Comments
-// 			WHERE post_id = ?
-// 			ORDER BY created_at ASC`
-
-// 	rows, err := m.DB.Query(stmt, postId)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
-
-// 	var comments []*Comments
-
-// 	for rows.Next() {
-// 		comment := &Comments{}
-// 		err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Text, &comment.LikeCount, &comment.DislikeCount, &comment.CreatedAt)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-
-// 		comments = append(comments, comment)
-// 	}
-
-// 	if err = rows.Err(); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return comments, nil
-// }
-
-func (m *CommentsModel) GetAllByPostIdAndUserId(userId int, postId int) ([]*Comments, error) {
+func (m *CommentsModel) GetAllByPostIdAndUserId(userId int, postId int) ([]*CommentReaction, error) {
 	stmt := `SELECT c.id, c.post_id, c.user_id, c.text, c.like_count, c.dislike_count, c.created_at, cr.type as reaction
 			FROM Comments c
 			LEFT JOIN Comment_Reactions cr on cr.comment_id = c.id
@@ -112,10 +87,10 @@ func (m *CommentsModel) GetAllByPostIdAndUserId(userId int, postId int) ([]*Comm
 	}
 	defer rows.Close()
 
-	var comments []*Comments
+	var comments []*CommentReaction
 
 	for rows.Next() {
-		comment := &Comments{}
+		comment := &CommentReaction{}
 		var reaction sql.NullString
 
 		err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Text, &comment.LikeCount, &comment.DislikeCount, &comment.CreatedAt, &reaction)
@@ -171,3 +146,46 @@ func (m *CommentsModel) UpdateCommentLikeDislikeCounts(commentID int, likeCount 
 // 2) is disliked
 // doesnt exist:
 // 1) is null
+
+func (m *CommentsModel) GetAllByPostId(postId int) ([]*Comment, error) {
+	stmt := `SELECT c.id, c.post_id, c.user_id, c.text, c.like_count, c.dislike_count, c.created_at
+			FROM Comments c
+			WHERE c.post_id = ? `
+
+	rows, err := m.DB.Query(stmt, postId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var comments []*Comment
+
+	for rows.Next() {
+		comment := &Comment{}
+
+		err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Text, &comment.LikeCount, &comment.DislikeCount, &comment.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		comments = append(comments, comment)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return comments, nil
+}
+
+// updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
+func (m *CommentsModel) DeleteCommentsByPostId(postID int) error {
+	// Update the post's like/dislike counts in the database
+	stmt := `DELETE FROM Comments WHERE post_id = ?`
+	_, err := m.DB.Exec(stmt, postID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
