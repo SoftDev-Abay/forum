@@ -33,6 +33,8 @@ func (app *Application) Routes() http.Handler {
 
 	mux.Handle("/comments/create", app.loginMiddware(http.HandlerFunc(app.createCommentPost)))
 	mux.Handle("/comments/reaction", app.loginMiddware(http.HandlerFunc(app.handleCommentReaction)))
+	mux.Handle("/comments/delete", app.loginMiddware(http.HandlerFunc(app.commentDelete)))
+
 	mux.Handle("/personal-page", app.loginMiddware(http.HandlerFunc(app.personalPage)))
 
 	mux.HandleFunc("/register", app.register)

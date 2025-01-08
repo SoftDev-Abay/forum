@@ -13,6 +13,7 @@ type CommentsModelInterface interface {
 	Get(id int) (*Comment, error)
 	DeleteCommentsByPostId(postID int) error
 	GetAllByPostId(postId int) ([]*Comment, error)
+	DeleteCommentById(id int) error
 }
 
 type Comment struct {
@@ -183,6 +184,19 @@ func (m *CommentsModel) DeleteCommentsByPostId(postID int) error {
 	// Update the post's like/dislike counts in the database
 	stmt := `DELETE FROM Comments WHERE post_id = ?`
 	_, err := m.DB.Exec(stmt, postID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
+// updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
+func (m *CommentsModel) DeleteCommentById(id int) error {
+	// Update the post's like/dislike counts in the database
+	stmt := `DELETE FROM Comments WHERE id = ?`
+	_, err := m.DB.Exec(stmt, id)
 	if err != nil {
 		return err
 	}
