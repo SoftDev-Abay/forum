@@ -134,3 +134,13 @@ func generateUniqueFileName(originalFilename string) (string, error) {
 	// Return <UUID> + extension, e.g., "6ec29...-4ea2-86b1-...ab.png"
 	return u.String() + ext, nil
 }
+
+// Helper function to check if a role exists in a slice
+func contains(roles []string, role string) bool {
+	for _, r := range roles {
+		if r == role {
+			return true
+		}
+	}
+	return false
+}

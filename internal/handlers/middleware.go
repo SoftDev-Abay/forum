@@ -9,7 +9,14 @@ type contextKey string
 
 const userContextKey contextKey = "userContextKey"
 
-func (app *Application) loginMiddware(next http.Handler) http.Handler {
+var defaultRoles = []string{"user"}
+
+func (app *Application) loginMiddware(next http.Handler, roles ...string) http.Handler {
+	// If no roles are passed, use the default roles
+	if len(roles) == 0 {
+		roles = defaultRoles
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenCookie, err := r.Cookie("token")
 		if err != nil {
@@ -24,6 +31,11 @@ func (app *Application) loginMiddware(next http.Handler) http.Handler {
 			app.Logger.Error(err.Error())
 
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		if !contains(roles, user.Role) {
+			app.clientError(w, r, http.StatusForbidden)
 			return
 		}
 
