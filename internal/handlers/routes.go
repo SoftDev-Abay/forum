@@ -43,5 +43,11 @@ func (app *Application) Routes() http.Handler {
 	mux.HandleFunc("/login/post", app.loginPost)
 	mux.HandleFunc("/logout", app.logout)
 
+	// Promotion request routes
+	mux.Handle("/promotion_requests", app.loginMiddware(http.HandlerFunc(app.getAllPromotionRequests), "admin"))
+	mux.Handle("/promotion_request/view", app.loginMiddware(http.HandlerFunc(app.getPromotionRequest), "admin"))
+	mux.Handle("/promotion_request/create", app.loginMiddware(http.HandlerFunc(app.sendPromotionRequest)))
+	mux.Handle("/promotion_request/change_status", app.loginMiddware(http.HandlerFunc(app.changePromotionRequestStatus), "admin"))
+
 	return mux
 }

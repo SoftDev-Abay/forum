@@ -16,9 +16,11 @@ type Application struct {
 	PostReactions     models.PostReactionModelInterface
 	Comments          models.CommentsModelInterface
 	CommentsReactions models.CommentsReactionsModelInterface
+	PromotionRequests models.PromotionRequestsModelInterface
 }
 
-func NewApp(logger *slog.Logger, teamplateCache map[string]*template.Template, categories *models.CategoriesModel, posts *models.PostModel, users *models.UserModel, session *models.SessionModel, postReactions *models.PostReactionsModel, comments *models.CommentsModel, commentsReactions *models.CommentsReactionsModel) *Application {
+func NewApp(logger *slog.Logger, teamplateCache map[string]*template.Template, categories *models.CategoriesModel, posts *models.PostModel, users *models.UserModel, session *models.SessionModel, postReactions *models.PostReactionsModel, comments *models.CommentsModel, commentsReactions *models.CommentsReactionsModel,
+	promotionRequests *models.PromotionRequestsModel) *Application {
 	app := &Application{
 		Logger:            logger,
 		TemplateCache:     teamplateCache,
@@ -29,6 +31,7 @@ func NewApp(logger *slog.Logger, teamplateCache map[string]*template.Template, c
 		PostReactions:     postReactions,
 		Comments:          comments,
 		CommentsReactions: commentsReactions,
+		PromotionRequests: promotionRequests,
 	}
 	return app
 }

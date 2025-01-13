@@ -1,0 +1,6 @@
+-- SQLite
+
+-- delete from users where id > 0;
+
+update users set role = 'admin' where username = 'admin';
+update users set role = 'moderator' where username = 'moderator';

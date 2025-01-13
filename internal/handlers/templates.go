@@ -10,23 +10,25 @@ import (
 )
 
 type templateData struct {
-	Form            interface{}
-	FormErrors      map[string]string
-	Categories      []*models.Categories
-	Category        *models.Categories
-	Posts           []*models.Posts
-	LikedPosts      []*models.Posts
-	IsAuthenticated bool
-	Post            *models.Posts
-	Comments        []*models.CommentReaction
-	CommentsNum     int
-	User            *models.User
-	PostReaction    *models.PostReaction
-	CurrentPage     int
-	TotalPages      int
-	CurrentCatID    int
-	VisiblePages    []int
-	PageSize        int
+	Form              interface{}
+	FormErrors        map[string]string
+	Categories        []*models.Categories
+	Category          *models.Categories
+	Posts             []*models.Posts
+	LikedPosts        []*models.Posts
+	IsAuthenticated   bool
+	Post              *models.Posts
+	Comments          []*models.CommentReaction
+	CommentsNum       int
+	User              *models.User
+	PostReaction      *models.PostReaction
+	CurrentPage       int
+	TotalPages        int
+	CurrentCatID      int
+	VisiblePages      []int
+	PageSize          int
+	PromotionRequests []*models.PromotionRequests
+	PromotionRequest  *models.PromotionRequests
 
 	// ERROR FIELDS:
 	ErrorCode int

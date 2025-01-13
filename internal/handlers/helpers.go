@@ -88,7 +88,6 @@ func (app *Application) render(w http.ResponseWriter, r *http.Request, status in
 
 func (app *Application) generateHashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	fmt.Println("errorka tut")
 	return string(bytes), err
 }
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 )
 
@@ -9,7 +10,7 @@ type contextKey string
 
 const userContextKey contextKey = "userContextKey"
 
-var defaultRoles = []string{"user"}
+var defaultRoles = []string{"admin"}
 
 func (app *Application) loginMiddware(next http.Handler, roles ...string) http.Handler {
 	// If no roles are passed, use the default roles
@@ -33,6 +34,9 @@ func (app *Application) loginMiddware(next http.Handler, roles ...string) http.H
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
+
+		fmt.Println("roles", roles)
+		fmt.Println("role", user.Role)
 
 		if !contains(roles, user.Role) {
 			app.clientError(w, r, http.StatusForbidden)
