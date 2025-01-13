@@ -7,7 +7,8 @@ CREATE TABLE Users (
     username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
-    enabled BOOLEAN NOT NULL
+    role TEXT CHECK(role IN ('user', 'moderator', 'admin')) NOT NULL DEFAULT 'user',
+    enabled BOOLEAN NOT NULL DEFAULT 1
 );
 
 -- Create table for Categories
@@ -44,7 +45,7 @@ CREATE TABLE Comments (
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 
--- Create table for Post Reactions (use TEXT for reaction type)
+-- Create table for Post_Reactions (use TEXT for reaction type)
 CREATE TABLE Post_Reactions (
     type TEXT CHECK(type IN ('like', 'dislike')) NOT NULL,
     user_id INTEGER NOT NULL,
@@ -54,7 +55,7 @@ CREATE TABLE Post_Reactions (
     FOREIGN KEY (post_id) REFERENCES Posts(id)
 );
 
--- Create table for Comment Reactions (use TEXT for reaction type)
+-- Create table for Comment_Reactions (use TEXT for reaction type)
 CREATE TABLE Comment_Reactions (
     type TEXT CHECK(type IN ('like', 'dislike')) NOT NULL,
     user_id INTEGER NOT NULL,
@@ -74,15 +75,51 @@ CREATE TABLE Sessions (
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 
+-- Create table for Report_Reasons
+CREATE TABLE Report_Reasons (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL
+);
+
+-- Create table for Reports
+CREATE TABLE Reports (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    moderator_id INTEGER NOT NULL,
+    post_id INTEGER NOT NULL,
+    report_reason_id INTEGER NOT NULL,
+    description TEXT NOT NULL,
+    dateCreated DATETIME NOT NULL,
+    admin_id INTEGER,
+    admin_response TEXT,
+    FOREIGN KEY (moderator_id) REFERENCES Users(id),
+    FOREIGN KEY (post_id) REFERENCES Posts(id),
+    FOREIGN KEY (report_reason_id) REFERENCES Report_Reasons(id),
+    FOREIGN KEY (admin_id) REFERENCES Users(id)
+);
+
+-- Create table for Promotion_Requests
+CREATE TABLE Promotion_Requests (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    description TEXT,
+    status BOOLEAN NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES Users(id)
+);
+
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+
+DROP TABLE IF EXISTS Promotion_Requests;
+DROP TABLE IF EXISTS Reports;
+DROP TABLE IF EXISTS Report_Reasons;
 DROP TABLE IF EXISTS Sessions;
 DROP TABLE IF EXISTS Comment_Reactions;
 DROP TABLE IF EXISTS Post_Reactions;
 DROP TABLE IF EXISTS Comments;
-DROP TABLE IF EXISTS Post;
+DROP TABLE IF EXISTS Posts;
 DROP TABLE IF EXISTS Categories;
 DROP TABLE IF EXISTS Users;
+
 -- +goose StatementEnd
