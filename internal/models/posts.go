@@ -17,6 +17,7 @@ type PostsModelInterface interface {
 	GetPostsByIDs(postIDs []int) ([]*Posts, error)
 	GetFilteredPosts(categoryID, page, pageSize int) ([]*Posts, error)
 	CountPosts(categoryID int) (int, error)
+	DeletePostById(id int) error
 }
 
 type Posts struct {
@@ -192,81 +193,91 @@ func (m *PostModel) GetPostsByIDs(postIDs []int) ([]*Posts, error) {
 	return posts, nil
 }
 
-
 func (m *PostModel) GetFilteredPosts(categoryID, page, pageSize int) ([]*Posts, error) {
-    if page < 1 {
-        page = 1
-    }
-    offset := (page - 1) * pageSize
+	if page < 1 {
+		page = 1
+	}
+	offset := (page - 1) * pageSize
 
-    // Base query
-    query := `
+	// Base query
+	query := `
         SELECT id, title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count
         FROM Posts
     `
-    var args []interface{}
-    var whereClauses []string
+	var args []interface{}
+	var whereClauses []string
 
-    // If filtering by category
-    if categoryID > 0 {
-        whereClauses = append(whereClauses, "category_id = ?")
-        args = append(args, categoryID)
-    }
+	// If filtering by category
+	if categoryID > 0 {
+		whereClauses = append(whereClauses, "category_id = ?")
+		args = append(args, categoryID)
+	}
 
-    // If we have any WHERE clauses, add them
-    if len(whereClauses) > 0 {
-        query += " WHERE " + strings.Join(whereClauses, " AND ")
-    }
+	// If we have any WHERE clauses, add them
+	if len(whereClauses) > 0 {
+		query += " WHERE " + strings.Join(whereClauses, " AND ")
+	}
 
-    query += ` ORDER BY createdAt DESC`
-    query += ` LIMIT ? OFFSET ?`
-    args = append(args, pageSize, offset)
+	query += ` ORDER BY createdAt DESC`
+	query += ` LIMIT ? OFFSET ?`
+	args = append(args, pageSize, offset)
 
-    rows, err := m.DB.Query(query, args...)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	rows, err := m.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    var posts []*Posts
-    for rows.Next() {
-        post := &Posts{}
-        err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt,
-            &post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount)
-        if err != nil {
-            return nil, err
-        }
-        posts = append(posts, post)
-    }
+	var posts []*Posts
+	for rows.Next() {
+		post := &Posts{}
+		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt,
+			&post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
 
-    if err = rows.Err(); err != nil {
-        return nil, err
-    }
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
 
-    return posts, nil
+	return posts, nil
 }
 
 func (m *PostModel) CountPosts(categoryID int) (int, error) {
-    query := `SELECT COUNT(*) FROM Posts`
-    var args []interface{}
-    var whereClauses []string
+	query := `SELECT COUNT(*) FROM Posts`
+	var args []interface{}
+	var whereClauses []string
 
-    // If filtering by category
-    if categoryID > 0 {
-        whereClauses = append(whereClauses, "category_id = ?")
-        args = append(args, categoryID)
-    }
+	// If filtering by category
+	if categoryID > 0 {
+		whereClauses = append(whereClauses, "category_id = ?")
+		args = append(args, categoryID)
+	}
 
-    // If we have any WHERE clauses, add them
-    if len(whereClauses) > 0 {
-        query += " WHERE " + strings.Join(whereClauses, " AND ")
-    }
+	// If we have any WHERE clauses, add them
+	if len(whereClauses) > 0 {
+		query += " WHERE " + strings.Join(whereClauses, " AND ")
+	}
 
-    var count int
-    err := m.DB.QueryRow(query, args...).Scan(&count)
-    if err != nil {
-        return 0, err
-    }
+	var count int
+	err := m.DB.QueryRow(query, args...).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
 
-    return count, nil
+	return count, nil
+}
+
+func (m *PostModel) DeletePostById(id int) error {
+	// Update the post's like/dislike counts in the database
+	stmt := `DELETE FROM Posts WHERE id = ?`
+	_, err := m.DB.Exec(stmt, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

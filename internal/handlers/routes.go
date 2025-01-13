@@ -29,8 +29,12 @@ func (app *Application) Routes() http.Handler {
 
 	mux.Handle("/post/create/post", app.loginMiddware(http.HandlerFunc(app.postCreatePost)))
 	mux.Handle("/post/create", app.loginMiddware(http.HandlerFunc(app.postCreate)))
+	mux.Handle("/post/delete", app.loginMiddware(http.HandlerFunc(app.postDelete), "moderator", "admin"))
+
 	mux.Handle("/comments/create", app.loginMiddware(http.HandlerFunc(app.createCommentPost)))
 	mux.Handle("/comments/reaction", app.loginMiddware(http.HandlerFunc(app.handleCommentReaction)))
+	mux.Handle("/comments/delete", app.loginMiddware(http.HandlerFunc(app.commentDelete), "moderator", "admin"))
+
 	mux.Handle("/personal-page", app.loginMiddware(http.HandlerFunc(app.personalPage)))
 
 	mux.HandleFunc("/register", app.register)
@@ -38,6 +42,12 @@ func (app *Application) Routes() http.Handler {
 	mux.HandleFunc("/login", app.login)
 	mux.HandleFunc("/login/post", app.loginPost)
 	mux.HandleFunc("/logout", app.logout)
+
+	// Promotion request routes
+	mux.Handle("/promotion_requests", app.loginMiddware(http.HandlerFunc(app.getAllPromotionRequests), "admin"))
+	mux.Handle("/promotion_request/view", app.loginMiddware(http.HandlerFunc(app.getPromotionRequest), "admin"))
+	mux.Handle("/promotion_request/create", app.loginMiddware(http.HandlerFunc(app.sendPromotionRequest)))
+	mux.Handle("/promotion_request/change_status", app.loginMiddware(http.HandlerFunc(app.changePromotionRequestStatus), "admin"))
 
 	return mux
 }

@@ -1,3 +1,5 @@
+write me a handler that will delete post which implied also deleting comments and  comment_reactions at the same time (I have not given you all the functions only the ones you need) 
+
 package handlers
 
 import (
@@ -373,86 +375,201 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postID), http.StatusSeeOther)
 }
 
-func (app *Application) postDelete(w http.ResponseWriter, r *http.Request) {
-	// Only allow POST (or possibly DELETE, if you are using REST conventions).
-	if r.Method != http.MethodPost {
-		app.clientError(w, r, http.StatusMethodNotAllowed)
-		return
-	}
 
-	// Parse the `id` from the query parameters (e.g. /post/delete?id=123).
-	idStr := r.URL.Query().Get("id")
-	postID, err := strconv.Atoi(idStr)
-	if err != nil || postID < 1 {
-		app.clientError(w, r, http.StatusBadRequest)
-		return
-	}
 
-	// (Optional) Check if the user is authenticated and/or is allowed to delete the post.
-	_, err = app.getAuthenticatedUserID(r)
+
+
+
+
+
+
+
+
+
+package models
+
+import (
+	"database/sql"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+)
+
+type PostsModelInterface interface {
+	Insert(title string, content string, imgUrl string, createdAt time.Time, categoryID int, ownerID int) (int, error)
+	Get(id int) (*Posts, error)
+	Latest() ([]*Posts, error)
+	GetPostsByUserID(userID int) ([]*Posts, error)
+	UpdatePostLikeDislikeCounts(postID int, likeCount int, dislikeCount int) error
+	GetPostsByIDs(postIDs []int) ([]*Posts, error)
+	GetFilteredPosts(categoryID, page, pageSize int) ([]*Posts, error)
+	CountPosts(categoryID int) (int, error)
+	DeletePostById(id int) error
+}
+
+type Posts struct {
+	ID           int
+	Title        string
+	Content      string
+	ImgUrl       string
+	CreatedAt    time.Time
+	CategoryID   int
+	OwnerID      int
+	LikeCount    int
+	DislikeCount int
+	IsLiked      bool // Tracks whether the logged-in user has liked the post
+	IsDisliked   bool // Tracks whether the logged-in user has disliked the post
+}
+
+type PostModel struct {
+	DB                 *sql.DB
+	PostReactionsModel *PostReactionsModel // Inject PostReactionsModel into PostModel
+}
+
+
+func (m *PostModel) DeletePostById(id int) error {
+	// Update the post's like/dislike counts in the database
+	stmt := `DELETE FROM Posts WHERE id = ?`
+	_, err := m.DB.Exec(stmt, id)
 	if err != nil {
-		app.notAuthenticated(w, r)
-		return
+		return err
 	}
 
-	// Retrieve the post to get the image URL
-	post, err := app.Posts.Get(postID)
+	return nil
+}
+
+
+package models
+
+import (
+	"database/sql"
+	"errors"
+	"time"
+)
+
+type CommentsModelInterface interface {
+	Insert(postID int, userID int, text string, created_at time.Time) (int, error)
+	GetAllByPostIdAndUserId(userId int, postId int) ([]*CommentReaction, error)
+	UpdateCommentLikeDislikeCounts(commentID int, likeCount int, dislikeCount int) error
+	Get(id int) (*CommentReaction, error)
+	DeleteCommentsByPostId(postID int) error
+	GetAllByPostId(postId int) ([]*Comment, error)
+}
+
+type Comment struct {
+	ID           int
+	PostID       int
+	UserID       int
+	Text         string
+	LikeCount    int
+	DislikeCount int
+	CreatedAt    time.Time}
+
+
+
+type CommentReaction struct {
+	Comment
+	IsLiked    bool
+	IsDisliked bool
+}
+
+type CommentsModel struct {
+	DB *sql.DB
+}
+
+func (m *CommentsModel) GetAllByPostId(postId int) ([]*Comment, error) {
+	stmt := `SELECT c.id, c.post_id, c.user_id, c.text, c.like_count, c.dislike_count, c.created_at
+			FROM Comments c
+			WHERE c.post_id = ? `
+
+	rows, err := m.DB.Query(stmt, postId)
 	if err != nil {
-		if errors.Is(err, models.ErrNoRecord) {
-			app.notFound(w, r)
-		} else {
-			app.serverError(w, r, err)
-		}
-		return
+		return nil, err
 	}
+	defer rows.Close()
 
-	err = app.PostReactions.DeleteReactionsByPostId(postID)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
+	var comments []*Comment
 
-	// 1) Get all comments for the post
-	comments, err := app.Comments.GetAllByPostId(postID)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
+	for rows.Next() {
+		comment := &Comment{}
 
-	// 2) For each comment, delete associated comment reactions
-	for _, comment := range comments {
-		err = app.CommentsReactions.DeleteReactioByCommentId(comment.ID)
+		err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Text, &comment.LikeCount, &comment.DislikeCount, &comment.CreatedAt)
 		if err != nil {
-			app.serverError(w, r, err)
-			return
+			return nil, err
 		}
+
+		comments = append(comments, comment)
 	}
 
-	// 3) Delete all comments for the post
-	err = app.Comments.DeleteCommentsByPostId(postID)
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return comments, nil
+}
+
+// updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
+func (m *CommentsModel) DeleteCommentsByPostId(postID int) error {
+	// Update the post's like/dislike counts in the database
+	stmt := `DELETE FROM Comments WHERE post_id = ?`
+	_, err := m.DB.Exec(stmt, postID)
 	if err != nil {
-		app.serverError(w, r, err)
-		return
+		return err
 	}
 
-	// 4) Finally, delete the post itself
-	err = app.Posts.DeletePostById(postID)
+	return nil
+}
+
+
+
+
+package models
+
+import (
+	"database/sql"
+	"errors"
+)
+
+type CommentsReactionsModelInterface interface {
+	AddReaction(userID int, CommentID int, reactionType string) error
+	UpdateReaction(userID int, CommentID int, reactionType string) error
+	DeleteReaction(userID int, CommentID int) error
+	GetReaction(userID int, CommentID int) (*CommentsReactions, error)
+	GetReactionCount(CommentID int, reactionType string) (int, error)
+	GetReactionByUserID(userID int) (*CommentsReactions, error)
+	DeleteReactioByCommentId(CommentID int) error
+}
+
+type CommentsReactions struct {
+	UserID    int
+	CommentID int
+	Type      string // 'like' or 'dislike'
+}
+
+type CommentsReactionsModel struct {
+	DB *sql.DB
+}
+
+
+// GetReactionCount gets the count of reactions (like or dislike) for a post
+func (m *CommentsReactionsModel) GetReactionCount(CommentID int, reactionType string) (int, error) {
+	stmt := `SELECT COUNT(*) FROM Comment_Reactions WHERE comment_id = ? AND type = ?`
+	var count int
+	err := m.DB.QueryRow(stmt, CommentID, reactionType).Scan(&count)
 	if err != nil {
-		app.serverError(w, r, err)
-		return
+		return 0, err
 	}
+	return count, nil
+}
 
-	// If the post has an image, delete the image file
-	if post.ImgUrl != "" {
-		imagePath := "./data/imgs/" + post.ImgUrl
-		err = os.Remove(imagePath)
-		if err != nil && !os.IsNotExist(err) {
-			// Log the error but don't fail the request
-			fmt.Printf("Error deleting image file: %s, error: %v\n", imagePath, err)
-		}
+
+// DeleteReaction removes a reaction (like or dislike) from a user on a post
+func (m *CommentsReactionsModel) DeleteReactioByCommentId(CommentID int) error {
+	stmt := `DELETE FROM Comment_Reactions WHERE comment_id = ?`
+	_, err := m.DB.Exec(stmt,  CommentID)
+	if err != nil {
+		return err
 	}
-
-	// Redirect or respond with success
-	// e.g., redirect to homepage or back to some list:
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
 }

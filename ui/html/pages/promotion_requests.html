@@ -1,0 +1,31 @@
+{{define "title"}}Promotion Requests{{end}}
+{{define "main"}}
+<h2>Promotion Requests</h2>
+<!-- List of Promotion Requests -->
+{{if .PromotionRequests}}
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Description</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+    {{range .PromotionRequests}}
+    <tr>
+        <td>{{.ID}}</td>
+        <td>{{.Description}}</td>
+        <td>{{if .Approved}}Approved{{else}}Pending{{end}}</td>
+        <td>
+            <form action="/promotion_requests/change_status?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="hidden" name="status" value="{{not .Approved}}">
+                <button type="submit">{{if .Approved}}Revoke{{else}}Approve{{end}}</button>
+            </form>
+        </td>
+    </tr>
+    {{end}}
+</table>
+{{else}}
+<p>No promotion requests found.</p>
+{{end}}
+
+{{end}}

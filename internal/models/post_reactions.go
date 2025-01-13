@@ -18,6 +18,7 @@ type PostReactionModelInterface interface {
 	GetReactionCount(postID int, reactionType string) (int, error)
 	GetReactionByUserID(userID int) (*PostReaction, error)
 	GetLikedPostIDsByUserID(userID int) ([]int, error)
+	DeleteReactionsByPostId(postID int) error
 }
 
 type PostReaction struct {
@@ -165,4 +166,14 @@ func (m *PostReactionsModel) GetLikedPostIDsByUserID(userID int) ([]int, error) 
 	}
 
 	return postIDs, nil
+}
+
+// DeleteReaction removes a reaction (like or dislike) from a user on a post
+func (m *PostReactionsModel) DeleteReactionsByPostId(postID int) error {
+	stmt := `DELETE FROM Post_Reactions WHERE  post_id = ?`
+	_, err := m.DB.Exec(stmt, postID)
+	if err != nil {
+		return err
+	}
+	return nil
 }

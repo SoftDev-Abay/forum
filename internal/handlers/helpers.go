@@ -88,7 +88,6 @@ func (app *Application) render(w http.ResponseWriter, r *http.Request, status in
 
 func (app *Application) generateHashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	fmt.Println("errorka tut")
 	return string(bytes), err
 }
 
@@ -133,4 +132,14 @@ func generateUniqueFileName(originalFilename string) (string, error) {
 
 	// Return <UUID> + extension, e.g., "6ec29...-4ea2-86b1-...ab.png"
 	return u.String() + ext, nil
+}
+
+// Helper function to check if a role exists in a slice
+func contains(roles []string, role string) bool {
+	for _, r := range roles {
+		if r == role {
+			return true
+		}
+	}
+	return false
 }

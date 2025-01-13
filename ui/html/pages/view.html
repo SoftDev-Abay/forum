@@ -30,6 +30,11 @@
 
 
 
+<form action="/post/delete?id={{.ID}}" method="post">
+
+    <input type="submit" value="Delete">
+</form>
+
 
 <form action="/comments/create" method="post">
 
@@ -76,6 +81,11 @@
                         <i class="fa fa-thumbs-down {{if .IsDisliked}}red{{else}}no-color{{end}}"></i>
                         {{.DislikeCount}}
                     </button>
+                </form>
+
+
+                <form action="/comments/delete?id={{.ID}}" method="POST" style="display:inline;">
+                    <input type="submit" value="Delete">
                 </form>
 
             </div>

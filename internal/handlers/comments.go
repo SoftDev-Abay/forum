@@ -196,3 +196,52 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 	fmt.Println("Redirecting to:", redirectURL)
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
+
+func (app *Application) commentDelete(w http.ResponseWriter, r *http.Request) {
+	// Only allow POST (or possibly DELETE, if you are using REST conventions).
+	if r.Method != http.MethodPost {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the `id` from the query parameters (e.g. /post/delete?id=123).
+	idStr := r.URL.Query().Get("id")
+	commentID, err := strconv.Atoi(idStr)
+	if err != nil || commentID < 1 {
+		app.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	// (Optional) Check if the user is authenticated and/or is allowed to delete the post.
+	_, err = app.getAuthenticatedUserID(r)
+	if err != nil {
+		app.notAuthenticated(w, r)
+		return
+	}
+
+	// Retrieve the post to get the image URL
+	comment, err := app.Comments.Get(commentID)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w, r)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+
+	err = app.CommentsReactions.DeleteReactioByCommentId(commentID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	err = app.Comments.DeleteCommentById(commentID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Redirect to the post view page
+	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", comment.PostID), http.StatusSeeOther)
+}

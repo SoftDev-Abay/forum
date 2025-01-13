@@ -18,6 +18,7 @@ type User struct {
 	Username string
 	Password string
 	Email    string
+	Role     string
 	Enabled  bool
 }
 
@@ -26,12 +27,12 @@ type UserModel struct {
 }
 
 func (m *UserModel) GetByUsernameOrEmail(column string) (*User, error) {
-	stmt := `SELECT id, email, username, password, enabled FROM users
+	stmt := `SELECT id, email, username, password, enabled, role FROM users
 	WHERE username = ? OR email = ?`
 
 	u := &User{}
 
-	err := m.DB.QueryRow(stmt, column, column).Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Enabled)
+	err := m.DB.QueryRow(stmt, column, column).Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Enabled, &u.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -44,12 +45,12 @@ func (m *UserModel) GetByUsernameOrEmail(column string) (*User, error) {
 }
 
 func (m *UserModel) GetById(id int) (*User, error) {
-	stmt := `SELECT id, email, username, password, enabled FROM users
+	stmt := `SELECT id, email, username, password, enabled, role FROM users
 	WHERE id = ?`
 
 	u := &User{}
 
-	err := m.DB.QueryRow(stmt, id).Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Enabled)
+	err := m.DB.QueryRow(stmt, id).Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Enabled, &u.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -62,14 +63,14 @@ func (m *UserModel) GetById(id int) (*User, error) {
 }
 
 func (m *UserModel) GetByToken(token string) (*User, error) {
-	stmt := `SELECT u.id, u.email, u.username, u.password, u.enabled 
+	stmt := `SELECT u.id, u.email, u.username, u.password, u.enabled, u.role
 	FROM users u
 	INNER JOIN Sessions s on s.user_id = u.id
 	WHERE s.token = ? and s.expiresAt > datetime('now')`
 
 	u := &User{}
 
-	err := m.DB.QueryRow(stmt, token).Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Enabled)
+	err := m.DB.QueryRow(stmt, token).Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Enabled, &u.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -82,7 +83,7 @@ func (m *UserModel) GetByToken(token string) (*User, error) {
 }
 
 func (m *UserModel) GetAll() ([]*User, error) {
-	stmt := `SELECT id, email, username, password, enabled FROM users`
+	stmt := `SELECT id, email, username, password, enabled, &u.Role FROM users`
 
 	rows, err := m.DB.Query(stmt)
 	if err != nil {
@@ -96,7 +97,7 @@ func (m *UserModel) GetAll() ([]*User, error) {
 	for rows.Next() {
 		u := &User{}
 
-		err = rows.Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Enabled)
+		err = rows.Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Enabled, &u.Role)
 		if err != nil {
 			return nil, err
 		}
