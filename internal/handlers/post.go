@@ -68,6 +68,16 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var reportReasons []*models.ReportReasons
+	user, err := app.Users.GetById(userID)
+	if err == nil && (user.Role == "moderator" || user.Role == "admin") {
+		reportReasons, _ = app.ReportReasons.GetAllReasons()
+		// if error, just ignore or handle
+
+	} else if err != nil {
+		app.serverError(w, r, err)
+	}
+
 	// Get the user's reaction on this post (if any)
 	postReaction, err := app.PostReactions.GetReaction(userID, id)
 	if err != nil && err != models.ErrNoReaction {
@@ -89,12 +99,15 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, r, err)
 		return
 	}
+	fmt.Println(reportReasons)
 
 	// Render the post with its reactions
 	data := templateData{
-		Category: category,
-		Post:     post,
-		Comments: comments,
+		Category:      category,
+		Post:          post,
+		Comments:      comments,
+		ReportReasons: reportReasons,
+		User:          user,
 	}
 
 	app.render(w, r, http.StatusOK, "view.html", data)

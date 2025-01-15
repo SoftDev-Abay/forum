@@ -1,44 +1,69 @@
 {{define "title"}}Post #{{.Post.ID}}{{end}}
 
 {{define "main"}}
-{{with .Post}}
+{{if or (eq .User.Role "moderator") (eq .User.Role "admin")}}
+<form action="/post/report" method="POST" style="margin-top:1rem;">
+    <input type="hidden" name="post_id" value="{{.Post.ID}}" />
+
+    <label for="report_reason_id">Reason:</label>
+    <select name="report_reason_id" id="report_reason_id">
+        {{range .ReportReasons}}
+        <option value="{{.ID}}">{{.Text}}</option>
+        {{end}}
+    </select>
+    <br><br>
+
+    <label for="description">Description:</label><br>
+    <textarea name="description" rows="3" cols="40" placeholder="Optional extra details..."></textarea>
+    <br><br>
+
+    <input type="submit" value="Report Post">
+</form>
+
+<br>
+<br>
+
+    {{end}}
+{{if .Post}}
+
 <div class='snippet'>
     <div class='metadata'>
-        <strong>{{.Title}}</strong>
-        <span>#{{.ID}}</span>
+        <strong>{{.Post.Title}}</strong>
+        <span>#{{.Post.ID}}</span>
     </div>
-    <img src="http://localhost:4000/imgs/{{.ImgUrl}}" alt="Post image" />
+    {{with .Post.ImgUrl}}
+    <img src="http://localhost:4000/imgs/{{.Post.ImgUrl}}"/>
+    {{end}}
 
-    <pre><code>{{.Content}}</code></pre>
+    <pre><code>{{.Post.Content}}</code></pre>
 
     <div class='metadata'>
         <!-- Like and Dislike counts are clickable (submit via form) -->
-        <form action="/post/reaction?id={{.ID}}" method="POST" style="display:inline;">
+        <form action="/post/reaction?id={{.Post.ID}}" method="POST" style="display:inline;">
             <button class="reaction-button" type="submit" name="reaction" value="like">
-                <i class="fa fa-thumbs-up {{if .IsLiked}}green{{else}}no-color{{end}}"></i>
-                {{.LikeCount}}
+                <i class="fa fa-thumbs-up {{if .Post.IsLiked}}green{{else}}no-color{{end}}"></i>
+                {{.Post.LikeCount}}
             </button>
         </form>
-        <form action="/post/reaction?id={{.ID}}" method="POST" style="display:inline;">
+        <form action="/post/reaction?id={{.Post.ID}}" method="POST" style="display:inline;">
             <button class="reaction-button" type="submit" name="reaction" value="dislike">
-                <i class="fa fa-thumbs-down {{if .IsDisliked}}red{{else}}no-color{{end}}"></i>
-                {{.DislikeCount}}
+                <i class="fa fa-thumbs-down {{if .Post.IsDisliked}}red{{else}}no-color{{end}}"></i>
+                {{.Post.DislikeCount}}
             </button>
         </form>
     </div>
-</div>
 
 
 
-<form action="/post/delete?id={{.ID}}" method="post">
+
+<form action="/post/delete?id={{.Post.ID}}" method="post">
 
     <input type="submit" value="Delete">
 </form>
 
-
 <form action="/comments/create" method="post">
 
-    <input type="hidden" name="postId" value="{{.ID}}"  >
+    <input type="hidden" name="postId" value="{{.Post.ID}}"  >
     
 
     <div class="form-group">
@@ -50,6 +75,7 @@
 </form>
 
 <ul id="comments-list" class="comments-list">
+
 
 
 {{end}}
@@ -102,5 +128,7 @@
 </ul>
 
 <br>
+</div>
 
 {{end}}
+

@@ -48,8 +48,10 @@ func main() {
 	postsModel := &models.PostModel{DB: db, PostReactionsModel: postRecactions}
 	commentsModel := &models.CommentsModel{DB: db}
 	promotionRequestsModel := &models.PromotionRequestsModel{DB: db}
+	reports := &models.ReportsModel{DB: db}
+	reportReasons := &models.ReportReasonsModel{DB: db}
 
-	app := handlers.NewApp(logger, templateCache, categoriesModel, postsModel, users, session, postRecactions, commentsModel, commentReactions, promotionRequestsModel)
+	app := handlers.NewApp(logger, templateCache, categoriesModel, postsModel, users, session, postRecactions, commentsModel, commentReactions, promotionRequestsModel, reports, reportReasons)
 
 	srv := &http.Server{
 		Addr:     *addr,

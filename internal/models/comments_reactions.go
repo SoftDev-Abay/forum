@@ -139,11 +139,10 @@ func (m *CommentsReactionsModel) GetReactionCount(CommentID int, reactionType st
 	return count, nil
 }
 
-
 // DeleteReaction removes a reaction (like or dislike) from a user on a post
 func (m *CommentsReactionsModel) DeleteReactioByCommentId(CommentID int) error {
 	stmt := `DELETE FROM Comment_Reactions WHERE comment_id = ?`
-	_, err := m.DB.Exec(stmt,  CommentID)
+	_, err := m.DB.Exec(stmt, CommentID)
 	if err != nil {
 		return err
 	}

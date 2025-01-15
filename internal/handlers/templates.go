@@ -30,6 +30,9 @@ type templateData struct {
 	PromotionRequests []*models.PromotionRequests
 	PromotionRequest  *models.PromotionRequests
 
+	ReportReasons []*models.ReportReasons
+	Reports       []*models.Reports // or whatever your struct name is
+
 	// ERROR FIELDS:
 	ErrorCode int
 	ErrorMsg  string
@@ -40,6 +43,9 @@ var functions = template.FuncMap{
 	"add":       add,
 	"sub":       sub,
 	"slice":     slice,
+	"or": func(a, b bool) bool {
+		return a || b
+	},
 }
 
 func NewTemplateCache() (map[string]*template.Template, error) {

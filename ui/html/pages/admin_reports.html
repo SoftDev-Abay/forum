@@ -1,0 +1,50 @@
+{{define "title"}}Admin Reports{{end}}
+
+{{define "main"}}
+<h2>All Reports</h2>
+
+{{if .Reports}}
+<table>
+    <thead>
+    <tr>
+        <th>Report ID</th>
+        <th>Post ID</th>
+        <th>Moderator ID</th>
+        <th>Reason</th>
+        <th>Description</th>
+        <th>Date Created</th>
+        <th>Admin Response</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{range .Reports}}
+    <tr>
+        <td>#{{.ID}}</td>
+        <td>
+            <a href="/post/view?id={{.PostID}}">Post #{{.PostID}}</a>
+        </td>
+        <td>{{.ModeratorID}}</td>
+        <td>{{.ReportReasonID}} <!-- or use reason lookup --></td>
+        <td>{{.Description}}</td>
+        <td>{{humanDate .DateCreated}}</td>
+        <td>{{.AdminResponse}}</td>
+        <td>
+            <!-- Example: Admin can respond or delete the report.  -->
+            <form action="/admin/report/respond?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="submit" value="Respond">
+            </form>
+
+            <form action="/admin/report/delete?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="submit" value="Delete">
+            </form>
+        </td>
+    </tr>
+    {{end}}
+    </tbody>
+</table>
+{{else}}
+<p>No reports found.</p>
+{{end}}
+
+{{end}}

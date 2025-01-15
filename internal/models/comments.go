@@ -23,9 +23,8 @@ type Comment struct {
 	Text         string
 	LikeCount    int
 	DislikeCount int
-	CreatedAt    time.Time}
-
-
+	CreatedAt    time.Time
+}
 
 type CommentReaction struct {
 	Comment
@@ -190,7 +189,6 @@ func (m *CommentsModel) DeleteCommentsByPostId(postID int) error {
 
 	return nil
 }
-
 
 // updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
 func (m *CommentsModel) DeleteCommentById(id int) error {

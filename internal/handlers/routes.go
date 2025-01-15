@@ -30,6 +30,9 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("/post/create/post", app.loginMiddware(http.HandlerFunc(app.postCreatePost)))
 	mux.Handle("/post/create", app.loginMiddware(http.HandlerFunc(app.postCreate)))
 	mux.Handle("/post/delete", app.loginMiddware(http.HandlerFunc(app.postDelete), "moderator", "admin"))
+	// Report system routes
+	mux.Handle("/post/report", app.loginMiddware(http.HandlerFunc(app.ReportPost), "moderator", "admin"))
+	mux.Handle("/post/report/list", app.loginMiddware(http.HandlerFunc(app.adminReportList), "admin"))
 
 	mux.Handle("/comments/create", app.loginMiddware(http.HandlerFunc(app.createCommentPost)))
 	mux.Handle("/comments/reaction", app.loginMiddware(http.HandlerFunc(app.handleCommentReaction)))
