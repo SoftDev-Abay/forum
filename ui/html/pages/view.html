@@ -32,7 +32,7 @@
         <span>#{{.Post.ID}}</span>
     </div>
     {{with .Post.ImgUrl}}
-    <img src="http://localhost:4000/imgs/{{.Post.ImgUrl}}"/>
+    <img src="http://localhost:4000/imgs/{{.}}"/>
     {{end}}
 
     <pre><code>{{.Post.Content}}</code></pre>

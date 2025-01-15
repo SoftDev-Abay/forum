@@ -1,7 +1,7 @@
 {{define "title"}}Admin Reports{{end}}
 
 {{define "main"}}
-<h2>All Reports</h2>
+<h2>Pending Reports</h2>
 
 {{if .Reports}}
 <table>
@@ -13,8 +13,7 @@
         <th>Reason</th>
         <th>Description</th>
         <th>Date Created</th>
-        <th>Admin Response</th>
-        <th>Actions</th>
+        <th>Action</th>
     </tr>
     </thead>
     <tbody>
@@ -25,18 +24,17 @@
             <a href="/post/view?id={{.PostID}}">Post #{{.PostID}}</a>
         </td>
         <td>{{.ModeratorID}}</td>
-        <td>{{.ReportReasonID}} <!-- or use reason lookup --></td>
+        <td>{{.ReportReasonID}}</td>
         <td>{{.Description}}</td>
         <td>{{humanDate .DateCreated}}</td>
-        <td>{{.AdminResponse}}</td>
         <td>
-            <!-- Example: Admin can respond or delete the report.  -->
-            <form action="/admin/report/respond?id={{.ID}}" method="POST" style="display:inline;">
-                <input type="submit" value="Respond">
+            <!-- 1) Delete Post (and the report) -->
+            <form action="/admin/report/delete-post?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="submit" value="Delete Post">
             </form>
-
-            <form action="/admin/report/delete?id={{.ID}}" method="POST" style="display:inline;">
-                <input type="submit" value="Delete">
+            <!-- 2) Reject the report (keep the post) -->
+            <form action="/admin/report/reject?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="submit" value="Reject Report">
             </form>
         </td>
     </tr>
@@ -46,5 +44,4 @@
 {{else}}
 <p>No reports found.</p>
 {{end}}
-
 {{end}}

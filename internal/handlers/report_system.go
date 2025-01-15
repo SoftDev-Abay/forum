@@ -103,3 +103,102 @@ func (app *Application) adminReportList(w http.ResponseWriter, r *http.Request) 
 	// Render your admin reports page
 	app.render(w, r, http.StatusOK, "admin_reports.html", data)
 }
+
+func (app *Application) adminReportDeletePost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 1) Parse report ID from ?id=...
+	reportIDStr := r.URL.Query().Get("id")
+	reportID, err := strconv.Atoi(reportIDStr)
+	if err != nil || reportID < 1 {
+		app.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	// 2) Confirm user is admin
+	userID, err := app.getAuthenticatedUserID(r)
+	if err != nil {
+		app.notAuthenticated(w, r)
+		return
+	}
+	user, err := app.Users.GetById(userID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	if user.Role != "admin" {
+		app.clientError(w, r, http.StatusForbidden)
+		return
+	}
+
+	// 3) Fetch the report to find the post_id
+	report, err := app.Reports.Get(reportID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// 4) Delete the post
+	err = app.Posts.DeletePostById(report.PostID)
+	if err != nil {
+		// e.g., handle if post not found
+		app.serverError(w, r, err)
+		return
+	}
+
+	// 5) Also delete the report
+	err = app.Reports.DeleteReportByID(reportID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// 6) Redirect back to admin list
+	http.Redirect(w, r, "/admin/report/list", http.StatusSeeOther)
+}
+
+func (app *Application) adminReportReject(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 1) Parse the report ID from the query string (?id=...)
+	reportIDStr := r.URL.Query().Get("id")
+	reportID, err := strconv.Atoi(reportIDStr)
+	if err != nil || reportID < 1 {
+		app.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	// 2) Check if the current user is admin
+	userID, err := app.getAuthenticatedUserID(r)
+	if err != nil {
+		app.notAuthenticated(w, r)
+		return
+	}
+
+	user, err := app.Users.GetById(userID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	if user.Role != "admin" {
+		app.clientError(w, r, http.StatusForbidden)
+		return
+	}
+
+	// 3) Delete the report from DB
+	err = app.Reports.DeleteReportByID(reportID)
+	if err != nil {
+		// If no matching row is found or there's a DB error, handle it
+		app.serverError(w, r, err)
+		return
+	}
+
+	// 4) Redirect back to the report list (or anywhere you'd like)
+	http.Redirect(w, r, "/post/report/list", http.StatusSeeOther)
+}

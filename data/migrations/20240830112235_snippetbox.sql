@@ -90,7 +90,7 @@ CREATE TABLE Reports (
     description TEXT NOT NULL,
     dateCreated DATETIME NOT NULL,
     admin_id INTEGER,
-    admin_response TEXT,
+
     FOREIGN KEY (moderator_id) REFERENCES Users(id),
     FOREIGN KEY (post_id) REFERENCES Posts(id),
     FOREIGN KEY (report_reason_id) REFERENCES Report_Reasons(id),
