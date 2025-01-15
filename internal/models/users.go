@@ -11,6 +11,7 @@ type UserModelInterface interface {
 	GetAll() ([]*User, error)
 	Insert(email string, username string, password string, enabled bool) (int, error)
 	GetByUsernameOrEmail(column string) (*User, error)
+	UpdateRole(id int, role string) error
 }
 
 type User struct {
@@ -172,4 +173,16 @@ func (m *UserModel) Insert(email string, username string, password string, enabl
 	}
 
 	return int(id), nil // return the user ID after successful insertion
+}
+
+// UpdateRole updates the role of a user in the database
+func (m *UserModel) UpdateRole(id int, role string) error {
+	stmt := `UPDATE users SET role = ? WHERE id = ?`
+
+	_, err := m.DB.Exec(stmt, role, id)
+	if err != nil {
+		return err // return error from Exec if any
+	}
+
+	return nil // return nil if the update was successful
 }

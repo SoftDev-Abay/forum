@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -13,7 +14,17 @@ type PromotionRequestForm struct {
 	Description string
 }
 
-func (app *Application) sendPromotionRequest(w http.ResponseWriter, r *http.Request) {
+func (app *Application) promotionRequestCreate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+
+	data := templateData{}
+	app.render(w, r, http.StatusOK, "create_promotion_request.html", data)
+}
+
+func (app *Application) promotionRequestCreatePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		app.clientError(w, r, http.StatusMethodNotAllowed)
 		return
@@ -44,7 +55,8 @@ func (app *Application) sendPromotionRequest(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	_, err = app.PromotionRequests.Insert(userID, description, false)
+	// Insert with status as "pending"
+	_, err = app.PromotionRequests.Insert(userID, description, "pending")
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -55,6 +67,8 @@ func (app *Application) sendPromotionRequest(w http.ResponseWriter, r *http.Requ
 
 func (app *Application) changePromotionRequestStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
+		fmt.Println("id -1 ")
+
 		app.clientError(w, r, http.StatusMethodNotAllowed)
 		return
 	}
@@ -62,13 +76,32 @@ func (app *Application) changePromotionRequestStatus(w http.ResponseWriter, r *h
 	idStr := r.URL.Query().Get("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id < 1 {
+		fmt.Println("id 0 ", id)
+
 		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 
+	fmt.Println("id 1 ", id)
+
 	statusStr := r.FormValue("status")
-	status, err := strconv.ParseBool(statusStr)
-	if err != nil {
+	var status string
+	if statusStr == "approved" {
+		status = "approved"
+
+		fmt.Println("TRAVELED HERE")
+
+		err = app.Users.UpdateRole(id, "moderator")
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+	} else if statusStr == "declined" {
+		status = "declined"
+	} else {
+		fmt.Println("id 2 ", id)
+
 		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}

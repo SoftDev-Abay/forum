@@ -7,7 +7,7 @@ CREATE TABLE Users (
     username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
-    role TEXT CHECK(role IN ('user', 'moderator', 'admin')) NOT NULL DEFAULT 'user',
+    role VARCHAR(20) CHECK(role IN ('user', 'moderator', 'admin')) NOT NULL DEFAULT 'user',
     enabled BOOLEAN NOT NULL DEFAULT 1
 );
 
@@ -102,7 +102,7 @@ CREATE TABLE Promotion_Requests (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     description TEXT,
-    status BOOLEAN NOT NULL,
+    status  VARCHAR(20) CHECK(status IN ('pending', 'approved', 'rejected')) NOT NULL DEFAULT 'pending',
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 

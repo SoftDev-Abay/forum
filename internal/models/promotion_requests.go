@@ -1,28 +1,30 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type PromotionRequests struct {
 	ID          int
 	UserID      int
 	Description string
-	Status      bool
+	Status      string
 }
 
 type PromotionRequestsModelInterface interface {
-	Insert(user_id int, description string, status bool) (int, error)
+	Insert(user_id int, description string, status string) (int, error)
 	GetByID(id int) (*PromotionRequests, error)
 	GetAll() ([]*PromotionRequests, error)
-	UpdateStatus(id int, status bool) error
+	UpdateStatus(id int, status string) error
 }
 
 type PromotionRequestsModel struct {
 	DB *sql.DB
 }
 
-func (m *PromotionRequestsModel) Insert(user_id int, description string, status bool) (int, error) {
-	stmt := `INSERT INTO Promotion_Requests (user_id,description,status)
-	         VALUES (?, ?, ?, ?)`
+func (m *PromotionRequestsModel) Insert(user_id int, description string, status string) (int, error) {
+	stmt := `INSERT INTO Promotion_Requests (user_id, description, status)
+			 VALUES (?, ?, ?)`
 
 	result, err := m.DB.Exec(stmt, user_id, description, status)
 	if err != nil {
@@ -36,6 +38,7 @@ func (m *PromotionRequestsModel) Insert(user_id int, description string, status 
 
 	return int(id), nil
 }
+
 func (m *PromotionRequestsModel) GetByID(id int) (*PromotionRequests, error) {
 	stmt := `SELECT id, user_id, description, status FROM Promotion_Requests WHERE id = ?`
 	row := m.DB.QueryRow(stmt, id)
@@ -77,7 +80,7 @@ func (m *PromotionRequestsModel) GetAll() ([]*PromotionRequests, error) {
 	return requests, nil
 }
 
-func (m *PromotionRequestsModel) UpdateStatus(id int, status bool) error {
+func (m *PromotionRequestsModel) UpdateStatus(id int, status string) error {
 	stmt := `UPDATE Promotion_Requests SET status = ? WHERE id = ?`
 	_, err := m.DB.Exec(stmt, status, id)
 	return err

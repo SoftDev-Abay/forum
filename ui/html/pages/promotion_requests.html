@@ -6,6 +6,7 @@
 <table>
     <tr>
         <th>ID</th>
+        <th>User ID</th>
         <th>Description</th>
         <th>Status</th>
         <th>Actions</th>
@@ -13,13 +14,22 @@
     {{range .PromotionRequests}}
     <tr>
         <td>{{.ID}}</td>
+        <td>{{.UserID}}</td>
         <td>{{.Description}}</td>
-        <td>{{if .Approved}}Approved{{else}}Pending{{end}}</td>
+        <td>{{.Status}}</td>
         <td>
+            {{if eq .Status "pending"}}
             <form action="/promotion_requests/change_status?id={{.ID}}" method="POST" style="display:inline;">
-                <input type="hidden" name="status" value="{{not .Approved}}">
-                <button type="submit">{{if .Approved}}Revoke{{else}}Approve{{end}}</button>
+                <input type="hidden" name="status" value="approved">
+                <button type="submit">Approve</button>
             </form>
+            <form action="/promotion_requests/change_status?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="hidden" name="status" value="declined">
+                <button type="submit">Decline</button>
+            </form>
+            {{else}}
+            <span>No actions available</span>
+            {{end}}
         </td>
     </tr>
     {{end}}
