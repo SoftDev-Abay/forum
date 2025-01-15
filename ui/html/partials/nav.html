@@ -5,6 +5,10 @@
     {{if .IsAuthenticated}}
         <a href="/personal-page"> {{.User.Username}} </a>
         <a href="/logout">Logout</a>
+        <a href="/promotion_requests">Promotion Requests</a>
+        <!-- <a href="/promotion_requests/view">View Promotion Request</a> -->
+        <a href="/promotion_requests/create">Create Promotion Request</a>
+        <!-- <a href="/promotion_requests/change_status">Change Promotion Request Status</a> -->
     {{else}}
         <a href="/register">Register</a>
         <a href="/login">Login</a>

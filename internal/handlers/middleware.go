@@ -10,7 +10,7 @@ type contextKey string
 
 const userContextKey contextKey = "userContextKey"
 
-var defaultRoles = []string{"admin"}
+var defaultRoles = []string{"user", "moderator", "admin"}
 
 func (app *Application) loginMiddware(next http.Handler, roles ...string) http.Handler {
 	// If no roles are passed, use the default roles
