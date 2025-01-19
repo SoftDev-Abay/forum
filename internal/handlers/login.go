@@ -7,6 +7,7 @@ import (
 	"game-forum-abaliyev-ashirbay/internal/models"
 	"game-forum-abaliyev-ashirbay/internal/validator"
 	"net/http"
+	"strings"
 
 	"github.com/gofrs/uuid"
 )
@@ -52,6 +53,8 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 		Email:    r.PostForm.Get("email"),
 		Password: r.PostForm.Get("password"),
 	}
+
+	form.Email = strings.ToLower(form.Email)
 	v := validator.Validator{}
 	v.CheckField(validator.NotBlank(form.Email), "email", "Email cannot be blank")
 	v.CheckField(validator.MaxChars(form.Email, 50), "email", "Email must not exceed 50 characters")

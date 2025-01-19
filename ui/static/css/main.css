@@ -8,14 +8,24 @@
 
 html, body {
     height: 100%;
-    background-color: black;
 }
 
 body {
     line-height: 1.5;
-    background-color: #F1F3F6;
-    color: #34495E;
     overflow-y: scroll;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: linear-gradient(45deg, #3498db, #2ecc71, #3498db, #2ecc71);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
 }
 
 header, nav, main, footer {
@@ -32,7 +42,6 @@ main {
 h1 a {
     font-size: 36px;
     font-weight: bold;
-    background-image: url("/static/img/logo.png");
     background-repeat: no-repeat;
     background-position: 0px 0px;
     height: 36px;
@@ -68,13 +77,9 @@ textarea, input:not([type="submit"]) {
 }
 
 header {
-    background-image: -webkit-linear-gradient(left, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);
-    background-image: -moz-linear-gradient(left, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);
-    background-image: -ms-linear-gradient(left, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);
-    background-image: linear-gradient(to right, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);
     background-size: 100% 6px;
+
     background-repeat: no-repeat;
-    border-bottom: 1px solid #E4E5E7;
     overflow: auto;
     padding-top: 33px;
     padding-bottom: 27px;
@@ -87,12 +92,11 @@ header a {
 }
 
 nav {
-    border-bottom: 1px solid #E4E5E7;
     padding-top: 17px;
     padding-bottom: 15px;
-    background: #F7F9FA;
     height: 60px;
     color: #6A6C6F;
+    background-color: #283035;
 }
 
 nav a {
@@ -120,7 +124,7 @@ nav div:last-child a {
 }
 
 nav a.live {
-    color: #34495E;
+    color: #08640E;
     cursor: default;
 }
 
@@ -279,8 +283,9 @@ div.error {
 }
 
 table {
-    background: white;
-    border: 1px solid #E4E5E7;
+    box-shadow: 0px 0px 10px black;
+    padding: 50px;
+    background: #283035;
     border-collapse: collapse;
     width: 100%;
 }
@@ -296,19 +301,17 @@ th:last-child, td:last-child {
 }
 
 tr {
-    border-bottom: 1px solid #E4E5E7;
 }
 
 tr:nth-child(2n) {
-    background-color: #F7F9FA;
+    background-color: #34495E;
 }
 
 footer {
-    border-top: 1px solid #E4E5E7;
     padding-top: 17px;
     padding-bottom: 15px;
-    background: #F7F9FA;
-    height: 60px;
+    background: #283035;
+    height: 65px;
     color: #6A6C6F;
     text-align: center;
 }
@@ -589,4 +592,16 @@ footer {
 	.reply-list .comment-box {
 		width: 320px;
 	}
+}
+
+@keyframes gradientBG {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
 }
