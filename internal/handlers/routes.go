@@ -53,5 +53,13 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("/promotion_requests/create/post", app.loginMiddware(http.HandlerFunc(app.promotionRequestCreatePost)))
 	mux.Handle("/promotion_requests/change_status", app.loginMiddware(http.HandlerFunc(app.changePromotionRequestStatus), "admin"))
 
+
+
+	// Admin panel routes
+
+	mux.Handle("/users_control_panel", app.loginMiddware(http.HandlerFunc(app.usersPanel), "admin"))
+	mux.Handle("/users_control_panel/change_role", app.loginMiddware(http.HandlerFunc(app.changeUserRole), "admin"))
+
+
 	return mux
 }

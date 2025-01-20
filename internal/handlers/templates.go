@@ -29,6 +29,7 @@ type templateData struct {
 	PageSize          int
 	PromotionRequests []*models.PromotionRequests
 	PromotionRequest  *models.PromotionRequests
+	Users             []*models.User
 
 	ReportReasons []*models.ReportReasons
 	Reports       []*models.Reports // or whatever your struct name is

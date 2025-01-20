@@ -1,0 +1,50 @@
+{{define "title"}}Users Control Panel{{end}}
+{{define "main"}}
+<h2>Users</h2>
+<!-- List of All users -->
+{{if .Users}}
+<table>
+	<!-- stmt := `SELECT id, email, username, password, enabled, &u.Role FROM users` -->
+
+    <tr>
+        <th>ID</th>
+        <th>Email</th>
+        <th>Username</th>
+        <th>Enabled</th>
+        <th>Role</th>
+        <th>Actions</th>
+    </tr>
+    {{range .Users}}
+    <tr>
+
+        <td>{{.ID}}</td>
+        <td>{{.Email}}</td>
+        <td>{{.Username}}</td>
+        <td>{{.Enabled}}</td>
+        <td>{{.Role}}</td>
+        <!-- here I want to add two buttons, demote and promote -->
+         
+        <td>
+            {{if eq .Role "user"}}
+            <form action="/users_control_panel/change_role?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="hidden" name="role" value="moderator">
+                <button type="submit">Promote</button>
+            </form>
+            {{else if eq .Role "moderator"}}
+            <form action="/users_control_panel/change_role?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="hidden" name="role" value="user">
+                <button type="submit">Demote</button>
+            </form>
+            {{else}}
+            <span>No actions available</span>
+            {{end}}
+
+        </td>
+    </tr>
+    {{end}}
+</table>
+{{else}}
+<p>No users requests found.</p>
+{{end}}
+
+{{end}}

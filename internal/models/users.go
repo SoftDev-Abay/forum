@@ -84,7 +84,7 @@ func (m *UserModel) GetByToken(token string) (*User, error) {
 }
 
 func (m *UserModel) GetAll() ([]*User, error) {
-	stmt := `SELECT id, email, username, password, enabled, &u.Role FROM users`
+	stmt := `SELECT id, email, username, password, enabled, role FROM users`
 
 	rows, err := m.DB.Query(stmt)
 	if err != nil {
