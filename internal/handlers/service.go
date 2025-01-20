@@ -19,6 +19,12 @@ type Application struct {
 	PromotionRequests models.PromotionRequestsModelInterface
 	Reports           models.ReportsModelInterface
 	ReportReasons     models.ReportsReasonsModelInterface
+
+	// authentication optional
+	GoogleClientID     string
+    GoogleClientSecret string
+    GitHubClientID     string
+    GitHubClientSecret string
 }
 
 func NewApp(
@@ -34,6 +40,10 @@ func NewApp(
 	promotionRequests *models.PromotionRequestsModel,
 	reports *models.ReportsModel, // <-- ADD THIS
 	reportReasons *models.ReportReasonsModel, // <-- AND THIS
+	googleClientID     string,
+    googleClientSecret string,
+    gitHubClientID     string,
+    gitHubClientSecret string,
 ) *Application {
 	app := &Application{
 		Logger:            logger,
@@ -48,6 +58,11 @@ func NewApp(
 		PromotionRequests: promotionRequests,
 		Reports:           reports,       // <-- SET HERE
 		ReportReasons:     reportReasons, // <-- SET HERE
+
+		GoogleClientID: googleClientID,
+		GoogleClientSecret: googleClientSecret,
+		GitHubClientID: gitHubClientID,
+		GitHubClientSecret: gitHubClientSecret,
 	}
 	return app
 }

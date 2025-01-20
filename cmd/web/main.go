@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"database/sql"
 	"flag"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -22,6 +24,17 @@ func main() {
 	flag.Parse()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	err := loadEnvFile(".env")
+	if err != nil {
+		logger.Warn("could not load .env file: %v\n", err)
+		// you can continue if .env is optional or exit if it's required
+	}
+
+	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
+	googleClientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
+	githubClientID := os.Getenv("GITHUB_CLIENT_ID")
+	githubClientSecret := os.Getenv("GITHUB_CLIENT_SECRET")
 
 	db, err := sql.Open("sqlite3", *dbPath)
 	if err != nil {
@@ -51,7 +64,26 @@ func main() {
 	reports := &models.ReportsModel{DB: db}
 	reportReasons := &models.ReportReasonsModel{DB: db}
 
-	app := handlers.NewApp(logger, templateCache, categoriesModel, postsModel, users, session, postRecactions, commentsModel, commentReactions, promotionRequestsModel, reports, reportReasons)
+	app := handlers.NewApp(
+		logger, 
+		templateCache, 
+		categoriesModel, 
+		postsModel, 
+		users, 
+		session,
+		postRecactions,
+		commentsModel, 
+		commentReactions, 
+		promotionRequestsModel, 
+		reports, 
+		reportReasons, 
+
+		// authentication
+		googleClientID, 
+		googleClientSecret, 
+		githubClientID, 
+		githubClientSecret,
+	)
 
 	srv := &http.Server{
 		Addr:     *addr,
@@ -83,4 +115,39 @@ func main() {
 
 	err = srv.ListenAndServe()
 	logger.Error(err.Error())
+}
+
+func loadEnvFile(filename string) error {
+	f, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Trim whitespace
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			// Skip blank lines or comments
+			continue
+		}
+
+		// Split on the first '=' only
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			// Not a valid KEY=VALUE line; skip or return an error
+			continue
+		}
+
+		key := strings.TrimSpace(parts[0])
+		val := strings.TrimSpace(parts[1])
+
+		// Set it as an environment variable
+		os.Setenv(key, val)
+	}
+
+	return scanner.Err()
 }

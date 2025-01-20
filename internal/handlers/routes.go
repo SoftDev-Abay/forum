@@ -45,6 +45,10 @@ func (app *Application) Routes() http.Handler {
 	mux.HandleFunc("/login", app.login)
 	mux.HandleFunc("/login/post", app.loginPost)
 	mux.HandleFunc("/logout", app.logout)
+	// external authentication
+	mux.HandleFunc("/auth/google", app.googleLogin)
+	mux.HandleFunc("/auth/google/callback", app.googleCallback)
+
 
 	// Promotion request routes
 	mux.Handle("/promotion_requests", app.loginMiddware(http.HandlerFunc(app.getAllPromotionRequests)))
