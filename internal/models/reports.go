@@ -2,12 +2,16 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
 type ReportsModelInterface interface {
+	Get(reportID int) (*Reports, error)
 	CreateReport(moderatorID int, postID int, reasonID int, description string, dateCreated time.Time) error
 	GetAllReports() ([]*Reports, error)
+	UpdateAdminResponse(reportID, adminID int, adminResponse string) error
+	DeleteReportByID(reportID int) error
 }
 
 type Reports struct {
@@ -23,6 +27,31 @@ type Reports struct {
 
 type ReportsModel struct {
 	DB *sql.DB
+}
+
+func (m *ReportsModel) Get(reportID int) (*Reports, error) {
+	stmt := `
+        SELECT id, moderator_id, post_id, report_reason_id, description, dateCreated
+        FROM Reports
+        WHERE id = ?
+    `
+	row := m.DB.QueryRow(stmt, reportID)
+
+	r := &Reports{}
+	err := row.Scan(
+		&r.ID,
+		&r.ModeratorID,
+		&r.PostID,
+		&r.ReportReasonID,
+		&r.Description,
+		&r.DateCreated,
+	)
+	if err == sql.ErrNoRows {
+		return nil, ErrNoRecord // define your custom error
+	} else if err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
 func (m *ReportsModel) CreateReport(moderatorID int, postID int, reasonID int, description string, dateCreated time.Time) error {
@@ -66,4 +95,43 @@ func (m *ReportsModel) GetAllReports() ([]*Reports, error) {
 		reports = append(reports, r)
 	}
 	return reports, rows.Err()
+}
+
+func (m *ReportsModel) UpdateAdminResponse(reportID, adminID int, adminResponse string) error {
+	stmt := `
+        UPDATE Reports
+        SET admin_id = ?, admin_response = ?
+        WHERE id = ?
+    `
+	result, err := m.DB.Exec(stmt, adminID, adminResponse, reportID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		// Could return a custom error if no matching row
+		return fmt.Errorf("no report found with id = %d", reportID)
+	}
+	return nil
+}
+
+func (m *ReportsModel) DeleteReportByID(reportID int) error {
+	stmt := `DELETE FROM Reports WHERE id = ?`
+	result, err := m.DB.Exec(stmt, reportID)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		// Optionally return a custom error if the report isn't found
+		return fmt.Errorf("no report found with id = %d", reportID)
+	}
+	return nil
 }

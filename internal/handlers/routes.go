@@ -53,6 +53,9 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("/promotion_requests/create/post", app.loginMiddware(http.HandlerFunc(app.promotionRequestCreatePost)))
 	mux.Handle("/promotion_requests/change_status", app.loginMiddware(http.HandlerFunc(app.changePromotionRequestStatus), "admin"))
 
+	mux.Handle("/admin/report/delete-post", app.loginMiddware(http.HandlerFunc(app.adminReportDeletePost), "admin"))
+	mux.Handle("/admin/report/delete", app.loginMiddware(http.HandlerFunc(app.adminReportReject), "admin"))
+
 
 
 	// Admin panel routes

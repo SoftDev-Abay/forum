@@ -3,6 +3,9 @@
     <a href='/'>Home</a>
     <a href="/post/create">Create</a>
     {{if .IsAuthenticated}}
+        {{with eq .User.Role "admin"}}
+        <a href="/admin">ADM</a>
+        {{end}}
         <a href="/personal-page"> {{.User.Username}} </a>
         <a href="/logout">Logout</a>
         <a href="/promotion_requests">Promotion Requests</a>

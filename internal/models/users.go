@@ -175,7 +175,6 @@ func (m *UserModel) Insert(email string, username string, password string, enabl
 	return int(id), nil // return the user ID after successful insertion
 }
 
-
 // UpdateRole updates the role of a user in the database
 func (m *UserModel) UpdateRole(id int, role string) error {
 	stmt := `UPDATE users SET role = ? WHERE id = ?`
