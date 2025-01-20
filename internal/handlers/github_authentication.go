@@ -42,6 +42,19 @@ func (app *Application) githubCallback(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, r, err)
 		return
 	}
+	
+	githubUserEmails, err := getGitHubEmails(accessToken)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	for _, email := range githubUserEmails {
+		if email.Primary && email.Verified {
+			githubUser.Email = email.Email
+			break
+		}
+	}
 
 	// Check if user is in DB by email or login name
 	// If not found, create a new user
@@ -102,35 +115,8 @@ func exchangeGitHubCodeForToken(clientID, clientSecret, code string) (string, er
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return "", err
 	}
-	
+
 	return data.AccessToken, nil
-}
-
-// Fetch user info
-func getGitHubUser(accessToken string) (*GitHubUser, error) {
-	req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("failed to fetch user: %s", string(b))
-	}
-
-	var ghUser GitHubUser
-	if err := json.NewDecoder(resp.Body).Decode(&ghUser); err != nil {
-		return nil, err
-	}
-	return &ghUser, nil
 }
 
 // Just an example struct
@@ -138,4 +124,81 @@ type GitHubUser struct {
 	Login string `json:"login"`
 	Email string `json:"email"`
 	// more fields if needed
+}
+
+func getGitHubUser(accessToken string) (*GitHubUser, error) {
+    // 1) Basic /user request to get the "login" (username) and possibly some public fields
+    req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
+    if err != nil {
+        return nil, err
+    }
+    req.Header.Set("Authorization", "Bearer "+accessToken)
+    req.Header.Set("Accept", "application/vnd.github.v3+json")
+
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        b, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("failed to fetch user: %s", string(b))
+    }
+
+    var ghUser GitHubUser
+    if err := json.NewDecoder(resp.Body).Decode(&ghUser); err != nil {
+        return nil, err
+    }
+
+    // If ghUser.Email is empty, we make an additional request to /user/emails
+    if ghUser.Email == "" {
+        emails, err := getGitHubEmails(accessToken)
+        if err != nil {
+            return nil, err
+        }
+        // Typically, you pick the primary, verified email
+        for _, e := range emails {
+            if e.Primary && e.Verified {
+                ghUser.Email = e.Email
+                break
+            }
+        }
+    }
+    return &ghUser, nil
+}
+
+// This struct helps parse the extra email info
+type GitHubEmail struct {
+    Email      string `json:"email"`
+    Primary    bool   `json:"primary"`
+    Verified   bool   `json:"verified"`
+    Visibility string `json:"visibility"` // can be public / null
+}
+
+// getGitHubEmails fetches all emails attached to the user account
+func getGitHubEmails(accessToken string) ([]GitHubEmail, error) {
+    req, err := http.NewRequest("GET", "https://api.github.com/user/emails", nil)
+    if err != nil {
+        return nil, err
+    }
+    req.Header.Set("Authorization", "Bearer "+accessToken)
+    req.Header.Set("Accept", "application/vnd.github.v3+json")
+
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        b, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("failed to fetch user emails: %s", string(b))
+    }
+
+    var emails []GitHubEmail
+    if err := json.NewDecoder(resp.Body).Decode(&emails); err != nil {
+        return nil, err
+    }
+    return emails, nil
 }

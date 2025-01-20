@@ -1,6 +1,7 @@
 {{define "title"}}Post #{{.Post.ID}}{{end}}
 
 {{define "main"}}
+{{if .User}}
 {{if or (eq .User.Role "moderator") (eq .User.Role "admin")}}
 <form action="/post/report" method="POST" style="margin-top:1rem;">
     <input type="hidden" name="post_id" value="{{.Post.ID}}" />
@@ -22,8 +23,9 @@
 
 <br>
 <br>
+{{end}}
 
-    {{end}}
+{{end}}
 {{if .Post}}
 
 <div class='snippet'>
