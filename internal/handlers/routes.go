@@ -48,7 +48,8 @@ func (app *Application) Routes() http.Handler {
 	// external authentication
 	mux.HandleFunc("/auth/google", app.googleLogin)
 	mux.HandleFunc("/auth/google/callback", app.googleCallback)
-
+	mux.HandleFunc("/auth/github", app.githubLogin)
+	mux.HandleFunc("/auth/github/callback", app.githubCallback)
 
 	// Promotion request routes
 	mux.Handle("/promotion_requests", app.loginMiddware(http.HandlerFunc(app.getAllPromotionRequests)))
@@ -63,7 +64,6 @@ func (app *Application) Routes() http.Handler {
 	// Admin panel routes
 
 	mux.Handle("/admin/users/change_role", app.loginMiddware(http.HandlerFunc(app.changeUserRole), "admin"))
-
 
 	mux.Handle("/admin", app.loginMiddware(http.HandlerFunc(app.adminPanel), "admin"))
 
