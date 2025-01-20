@@ -56,13 +56,12 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("/admin/report/delete-post", app.loginMiddware(http.HandlerFunc(app.adminReportDeletePost), "admin"))
 	mux.Handle("/admin/report/delete", app.loginMiddware(http.HandlerFunc(app.adminReportReject), "admin"))
 
-
-
 	// Admin panel routes
 
-	mux.Handle("/users_control_panel", app.loginMiddware(http.HandlerFunc(app.usersPanel), "admin"))
-	mux.Handle("/users_control_panel/change_role", app.loginMiddware(http.HandlerFunc(app.changeUserRole), "admin"))
+	mux.Handle("/admin/users/change_role", app.loginMiddware(http.HandlerFunc(app.changeUserRole), "admin"))
 
+
+	mux.Handle("/admin", app.loginMiddware(http.HandlerFunc(app.adminPanel), "admin"))
 
 	return mux
 }

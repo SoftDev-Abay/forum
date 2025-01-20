@@ -112,7 +112,7 @@ func (app *Application) changePromotionRequestStatus(w http.ResponseWriter, r *h
 		return
 	}
 
-	http.Redirect(w, r, "/promotion_requests", http.StatusSeeOther)
+	http.Redirect(w, r, "/admin", http.StatusSeeOther)
 }
 
 func (app *Application) getAllPromotionRequests(w http.ResponseWriter, r *http.Request) {

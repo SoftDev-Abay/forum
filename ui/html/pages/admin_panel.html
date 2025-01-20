@@ -1,0 +1,125 @@
+{{define "title"}}Admin Panel{{end}}
+
+{{define "main"}}
+<h2>Admin Panel</h2>
+
+<h3>Pending Reports</h3>
+{{if .Reports}}
+<table>
+    <thead>
+    <tr>
+        <th>Report ID</th>
+        <th>Post ID</th>
+        <th>Moderator ID</th>
+        <th>Reason</th>
+        <th>Description</th>
+        <th>Date Created</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{range .Reports}}
+    <tr>
+        <td>#{{.ID}}</td>
+        <td>
+            <a href="/post/view?id={{.PostID}}">Post #{{.PostID}}</a>
+        </td>
+        <td>{{.ModeratorID}}</td>
+        <td>{{.ReportReasonID}}</td>
+        <td>{{.Description}}</td>
+        <td>{{humanDate .DateCreated}}</td>
+        <td>
+            <form action="/admin/report/delete-post?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="submit" value="Delete Post">
+            </form>
+            <form action="/admin/report/reject?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="submit" value="Reject Report">
+            </form>
+        </td>
+    </tr>
+    {{end}}
+    </tbody>
+</table>
+{{else}}
+<p>No reports found.</p>
+{{end}}
+
+<h3>Users</h3>
+{{if .Users}}
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Email</th>
+        <th>Username</th>
+        <th>Enabled</th>
+        <th>Role</th>
+        <th>Actions</th>
+    </tr>
+    {{range .Users}}
+    <tr>
+        <td>{{.ID}}</td>
+        <td>{{.Email}}</td>
+        <td>{{.Username}}</td>
+        <td>{{.Enabled}}</td>
+        <td>{{.Role}}</td>
+        <td>
+            {{if eq .Role "user"}}
+            <form action="/admin/users/change_role?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="hidden" name="role" value="moderator">
+                <button type="submit">Promote</button>
+            </form>
+            {{else if eq .Role "moderator"}}
+            <form action="/admin/users/change_role?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="hidden" name="role" value="user">
+                <button type="submit">Demote</button>
+            </form>
+            {{else}}
+            <span>No actions available</span>
+            {{end}}
+        </td>
+    </tr>
+    {{end}}
+</table>
+{{else}}
+<p>No users found.</p>
+{{end}}
+
+<h3>Promotion Requests</h3>
+{{if .PromotionRequests}}
+<table>
+    <tr>
+        <th>ID</th>
+        <th>User ID</th>
+        <th>Description</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+    {{range .PromotionRequests}}
+    <tr>
+        <td>{{.ID}}</td>
+        <td>{{.UserID}}</td>
+        <td>{{.Description}}</td>
+        <td>{{.Status}}</td>
+        <td>
+            {{if eq .Status "pending"}}
+            <form action="/promotion_requests/change_status?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="hidden" name="status" value="approved">
+                <button type="submit">Approve</button>
+            </form>
+            <form action="/promotion_requests/change_status?id={{.ID}}" method="POST" style="display:inline;">
+                <input type="hidden" name="status" value="declined">
+                <button type="submit">Decline</button>
+            </form>
+            {{else}}
+            <span>No actions available</span>
+            {{end}}
+        </td>
+    </tr>
+    {{end}}
+</table>
+{{else}}
+<p>No promotion requests found.</p>
+{{end}}
+
+{{end}}
+</form>
