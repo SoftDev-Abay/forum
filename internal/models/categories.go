@@ -9,6 +9,7 @@ type CategoriesModelInterface interface {
 	Insert(name string) (int, error)
 	Get(id int) (*Categories, error)
 	GetAll() ([]*Categories, error)
+	Delete(id int) error
 }
 
 type Categories struct {
@@ -85,4 +86,16 @@ func (m *CategoriesModel) GetAll() ([]*Categories, error) {
 	}
 
 	return categories, nil
+}
+
+
+// delete a category
+
+func (m *CategoriesModel) Delete(id int) error {
+	stmt := `DELETE FROM Categories WHERE id = ?`
+	_, err := m.DB.Exec(stmt, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

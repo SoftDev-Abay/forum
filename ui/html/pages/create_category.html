@@ -1,0 +1,16 @@
+{{define "title"}}Create Category{{end}}
+{{define "main"}}
+<h2>Create a New Category</h2>
+<form action="/admin/categories/create/post" method="post">
+
+    <div class="form-group">
+        <label for="name">Name:</label><br>
+        {{with .FormErrors.name}}
+        <label class='error'>{{.}}</label>
+        {{end}}
+        <input type="text" id="name" name="name" required><br><br>
+    </div>
+
+    <input type="submit" value="Submit">
+</form>
+{{end}}

@@ -66,6 +66,9 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("/admin/users/change_role", app.loginMiddware(http.HandlerFunc(app.changeUserRole), "admin"))
 
 	mux.Handle("/admin", app.loginMiddware(http.HandlerFunc(app.adminPanel), "admin"))
+	mux.Handle("/admin/categories/create", app.loginMiddware(http.HandlerFunc(app.categoryCreate), "admin"))
+	mux.Handle("/admin/categories/create/post", app.loginMiddware(http.HandlerFunc(app.categoryCreatePost), "admin"))
+	mux.Handle("/admin/categories/delete", app.loginMiddware(http.HandlerFunc(app.DeleteCategory), "admin"))
 
 	return mux
 }

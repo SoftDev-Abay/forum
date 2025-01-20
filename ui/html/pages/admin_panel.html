@@ -121,5 +121,42 @@
 <p>No promotion requests found.</p>
 {{end}}
 
+
+<h3>Categories</h3>
+{{if .Categories}}
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Actions</th>
+    </tr>
+    {{range .Categories}}
+    <tr>
+        <td>{{.ID}}</td>
+        <td>{{.Name}}</td>
+        <td>
+            {{if eq .ID 1}}
+            <span>No actions available</span>
+            {{else}}
+            <form action="/admin/categories/delete?id={{.ID}}" method="POST" style="display:inline;">
+                <button type="submit">Delete</button>
+            </form>
+            {{end}}
+
+
+        </td>
+    </tr>
+    {{end}}
+</table>
+{{else}}
+
+<p>No categories found.</p>
+
+{{end}}
+
+
+<a href="/admin/categories/create">Create a category</a>
+
 {{end}}
 </form>

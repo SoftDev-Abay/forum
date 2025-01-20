@@ -31,10 +31,20 @@ func (app *Application) adminPanel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// fetch categories
+
+	categories, err := app.Categories.GetAll()
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	data := templateData{
 		Users:             users,
 		PromotionRequests: promotionRequests,
 		Reports:           reports,
+		Categories:        categories,
 	}
 
 	app.render(w, r, http.StatusOK, "admin_panel.html", data)
