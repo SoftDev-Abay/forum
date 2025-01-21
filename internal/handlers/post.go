@@ -147,8 +147,7 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the multipart form (allow up to ~20 MB in memory; adjust if needed).
-	err := r.ParseMultipartForm(20 << 20) // 20 MB
+	err := r.ParseMultipartForm(15 << 20) 
 	if err != nil {
 		app.clientError(w, r, http.StatusBadRequest)
 		return
