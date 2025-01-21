@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -44,12 +45,19 @@ func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 		categoryID = 0
 	}
 
+	// Check if user is authenticated
+	userID, _ := app.getAuthenticatedUserID(r)
+
+	fmt.Println("userID", userID)
+
 	// 4) Get the posts for this page & category
-	posts, err := app.Posts.GetFilteredPosts(categoryID, page, pageSize)
+	posts, err := app.Posts.GetFilteredPosts(userID, categoryID, page, pageSize)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+
+	fmt.Println("posts", posts)
 
 	// 5) Count how many posts in total (for pagination)
 	totalPosts, err := app.Posts.CountPosts(categoryID)
@@ -84,7 +92,7 @@ func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 
 	// 8) Prepare your template data
 	data := templateData{
-		Posts:        posts,
+		PostsByUser:  posts,
 		Categories:   categories,
 		CurrentPage:  page,
 		TotalPages:   totalPages,

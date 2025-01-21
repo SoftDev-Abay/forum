@@ -10,17 +10,17 @@ import (
 
 type PostsModelInterface interface {
 	Insert(title string, content string, imgUrl string, createdAt time.Time, categoryID int, ownerID int) (int, error)
-	Get(id int) (*Posts, error)
-	Latest() ([]*Posts, error)
-	GetPostsByUserID(userID int) ([]*Posts, error)
+	Get(id int) (*Post, error)
+	Latest() ([]*Post, error)
 	UpdatePostLikeDislikeCounts(postID int, likeCount int, dislikeCount int) error
-	GetPostsByIDs(postIDs []int) ([]*Posts, error)
-	GetFilteredPosts(categoryID, page, pageSize int) ([]*Posts, error)
+	GetPostsByUserID(userID int) ([]*Post, error)
+	GetPostsByIDs(postIDs []int) ([]*Post, error)
+	GetFilteredPosts(userID, categoryID, page, pageSize int) ([]*PostByUser, error)
 	CountPosts(categoryID int) (int, error)
 	DeletePostById(id int) error
 }
 
-type Posts struct {
+type Post struct {
 	ID           int
 	Title        string
 	Content      string
@@ -30,8 +30,23 @@ type Posts struct {
 	OwnerID      int
 	LikeCount    int
 	DislikeCount int
-	IsLiked      bool // Tracks whether the logged-in user has liked the post
-	IsDisliked   bool // Tracks whether the logged-in user has disliked the post
+}
+
+type PostAdditionals struct {
+	CommentCount int
+	CategoryName string
+	OwnerName    string
+}
+
+type PostUserAdditionals struct {
+	IsLiked    bool
+	IsDisliked bool
+}
+
+type PostByUser struct {
+	Post
+	PostAdditionals
+	PostUserAdditionals
 }
 
 type PostModel struct {
@@ -56,14 +71,14 @@ func (m *PostModel) Insert(title string, content string, imgUrl string, createdA
 	return int(id), nil
 }
 
-func (m *PostModel) Get(id int) (*Posts, error) {
+func (m *PostModel) Get(id int) (*Post, error) {
 	stmt := `SELECT id, title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count
 	         FROM Posts
 	         WHERE id = ?`
 
 	row := m.DB.QueryRow(stmt, id)
 
-	post := &Posts{}
+	post := &Post{}
 
 	err := row.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt, &post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount)
 	if err != nil {
@@ -77,7 +92,7 @@ func (m *PostModel) Get(id int) (*Posts, error) {
 	return post, nil
 }
 
-func (m *PostModel) Latest() ([]*Posts, error) {
+func (m *PostModel) Latest() ([]*Post, error) {
 	stmt := `SELECT id, title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count
 	         FROM Posts
 	         ORDER BY createdAt ASC
@@ -89,10 +104,10 @@ func (m *PostModel) Latest() ([]*Posts, error) {
 	}
 	defer rows.Close()
 
-	var posts []*Posts
+	var posts []*Post
 
 	for rows.Next() {
-		post := &Posts{}
+		post := &Post{}
 		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt, &post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount)
 		if err != nil {
 			return nil, err
@@ -119,7 +134,7 @@ func (m *PostModel) UpdatePostLikeDislikeCounts(postID int, likeCount int, disli
 	return nil
 }
 
-func (m *PostModel) GetPostsByUserID(userID int) ([]*Posts, error) {
+func (m *PostModel) GetPostsByUserID(userID int) ([]*Post, error) {
 	stmt := `SELECT id, title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count
 			FROM Posts 
 			WHERE owner_id = ?
@@ -131,10 +146,10 @@ func (m *PostModel) GetPostsByUserID(userID int) ([]*Posts, error) {
 	}
 	defer rows.Close()
 
-	var posts []*Posts
+	var posts []*Post
 
 	for rows.Next() {
-		post := &Posts{}
+		post := &Post{}
 		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt, &post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount)
 		if err != nil {
 			return nil, err
@@ -149,10 +164,10 @@ func (m *PostModel) GetPostsByUserID(userID int) ([]*Posts, error) {
 	return posts, nil
 }
 
-func (m *PostModel) GetPostsByIDs(postIDs []int) ([]*Posts, error) {
+func (m *PostModel) GetPostsByIDs(postIDs []int) ([]*Post, error) {
 	if len(postIDs) == 0 {
 		// No liked post IDs, just return empty slice.
-		return []*Posts{}, nil
+		return []*Post{}, nil
 	}
 
 	// Build dynamic placeholders like (?, ?, ?) for the SQL IN clause.
@@ -176,9 +191,9 @@ func (m *PostModel) GetPostsByIDs(postIDs []int) ([]*Posts, error) {
 	}
 	defer rows.Close()
 
-	var posts []*Posts
+	var posts []*Post
 	for rows.Next() {
-		post := &Posts{}
+		post := &Post{}
 		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt,
 			&post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount)
 		if err != nil {
@@ -193,7 +208,61 @@ func (m *PostModel) GetPostsByIDs(postIDs []int) ([]*Posts, error) {
 	return posts, nil
 }
 
-func (m *PostModel) GetFilteredPosts(categoryID, page, pageSize int) ([]*Posts, error) {
+// func (m *PostModel) GetFilteredPosts(categoryID, page, pageSize int) ([]*PostByUser, error) {
+// 	if page < 1 {
+// 		page = 1
+// 	}
+// 	offset := (page - 1) * pageSize
+
+// 	// Base query
+// 	query := `
+//         SELECT p.id, p.title, p.content, p.imgUrl, p.createdAt, p.category_id, p.owner_id, p.like_count, p.dislike_count, COUNT(c.id) as comment_count
+//         FROM Posts as p
+// 		INNER JOIN Comments as c ON p.id = c.post_id
+//     `
+// 	var args []interface{}
+// 	var whereClauses []string
+
+// 	// If filtering by category
+// 	if categoryID > 0 {
+// 		whereClauses = append(whereClauses, "category_id = ?")
+// 		args = append(args, categoryID)
+// 	}
+
+// 	// If we have any WHERE clauses, add them
+// 	if len(whereClauses) > 0 {
+// 		query += " WHERE " + strings.Join(whereClauses, " AND ")
+// 	}
+
+// 	query += ` ORDER BY createdAt DESC`
+// 	query += ` LIMIT ? OFFSET ?`
+// 	args = append(args, pageSize, offset)
+
+// 	rows, err := m.DB.Query(query, args...)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
+
+// 	var posts []*PostByUser
+// 	for rows.Next() {
+// 		post := &PostByUser{}
+// 		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt,
+// 			&post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount, &post.CommentCount)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		posts = append(posts, post)
+// 	}
+
+// 	if err = rows.Err(); err != nil {
+// 		return nil, err
+// 	}
+
+// 	return posts, nil
+// }
+
+func (m *PostModel) GetFilteredPosts(userID int, categoryID, page, pageSize int) ([]*PostByUser, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -201,44 +270,67 @@ func (m *PostModel) GetFilteredPosts(categoryID, page, pageSize int) ([]*Posts, 
 
 	// Base query
 	query := `
-        SELECT id, title, content, imgUrl, createdAt, category_id, owner_id, like_count, dislike_count
-        FROM Posts
-    `
+		SELECT p.id, p.title, p.content, p.imgUrl, p.createdAt, p.category_id, cat.name as category_name, u.id AS owner_id, u.username AS owner_name,
+			   p.like_count, p.dislike_count, 
+			   CASE WHEN ? > 0 AND pr.type = 'like' THEN 1 ELSE 0 END AS is_liked,
+			   CASE WHEN ? > 0 AND pr.type = 'dislike' THEN 1 ELSE 0 END AS is_disliked,
+			   COUNT(c.id) AS comment_count
+		FROM Posts AS p
+		INNER JOIN Users AS u ON p.owner_id = u.id
+		INNER JOIN Categories AS cat ON p.category_id = cat.id
+		LEFT JOIN Comments AS c ON p.id = c.post_id
+		LEFT JOIN Post_Reactions AS pr ON p.id = pr.post_id AND pr.user_id = ?
+	`
+
 	var args []interface{}
+	args = append(args, userID, userID, userID) // For `is_liked` and `is_disliked` when `userID > 0`
 	var whereClauses []string
 
-	// If filtering by category
+	// Filtering by category if provided
 	if categoryID > 0 {
-		whereClauses = append(whereClauses, "category_id = ?")
+		whereClauses = append(whereClauses, "p.category_id = ?")
 		args = append(args, categoryID)
 	}
 
-	// If we have any WHERE clauses, add them
+	// Append WHERE clause if any conditions exist
 	if len(whereClauses) > 0 {
 		query += " WHERE " + strings.Join(whereClauses, " AND ")
 	}
 
-	query += ` ORDER BY createdAt DESC`
-	query += ` LIMIT ? OFFSET ?`
+	// Add grouping, ordering, and pagination
+	query += `
+		GROUP BY p.id, p.title, p.content, p.imgUrl, p.createdAt, p.category_id, 
+		         p.owner_id, p.like_count, p.dislike_count
+		ORDER BY p.createdAt DESC
+		LIMIT ? OFFSET ?
+	`
 	args = append(args, pageSize, offset)
 
+	// Execute the query
 	rows, err := m.DB.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var posts []*Posts
+	// Parse results
+	var posts []*PostByUser
 	for rows.Next() {
-		post := &Posts{}
+		post := &PostByUser{}
+		var isLiked, isDisliked int
 		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt,
-			&post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount)
+			&post.CategoryID, &post.CategoryName, &post.OwnerID, &post.OwnerName, &post.LikeCount, &post.DislikeCount,
+			&isLiked, &isDisliked, &post.CommentCount)
 		if err != nil {
 			return nil, err
 		}
+		post.IsLiked = isLiked == 1
+		post.IsDisliked = isDisliked == 1
+
 		posts = append(posts, post)
 	}
 
+	// Check for errors during row iteration
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}

@@ -4,47 +4,100 @@
 
 <!-- Optional: Category filter -->
 <form action="/" method="GET" style="margin-bottom: 1rem;">
-    <label for="category">Category:</label>
-    <select name="category" id="category" onchange="this.form.submit()">
-        <option value="0" {{if eq .CurrentCatID 0}}selected{{end}}>All</option>
-        {{range .Categories}}
-            <option value="{{.ID}}" {{if eq $.CurrentCatID .ID}}selected{{end}}>{{.Name}}</option>
-        {{end}}
-    </select>
+  <label for="category">Category:</label>
+  <select name="category" id="category" onchange="this.form.submit()">
+    <option value="0" {{if eq .CurrentCatID 0}}selected{{end}}>All</option>
+    {{range .Categories}}
+      <option value="{{.ID}}" {{if eq $.CurrentCatID .ID}}selected{{end}}>{{.Name}}</option>
+    {{end}}
+  </select>
 
-    <!-- Page Size -->
-    <label for="pageSize">Posts per page:</label>
-    <select name="pageSize" id="pageSize" onchange="this.form.submit()">
-        {{range (slice 5 10 20 50)}}
-            <option value="{{.}}" {{if eq $.PageSize .}}selected{{end}}>{{.}}</option>
-        {{end}}
-    </select>
+  <!-- Page Size -->
+  <label for="pageSize">Posts per page:</label>
+  <select name="pageSize" id="pageSize" onchange="this.form.submit()">
+    {{range (slice 5 10 20 50)}}
+      <option value="{{.}}" {{if eq $.PageSize .}}selected{{end}}>{{.}}</option>
+    {{end}}
+  </select>
 
-    <!-- Keep the current page -->
-    <input type="hidden" name="page" value="{{.CurrentPage}}" />
+  <!-- Keep the current page -->
+  <input type="hidden" name="page" value="{{.CurrentPage}}" />
 
-    <noscript><button type="submit">Filter</button></noscript>
+  <noscript><button type="submit">Filter</button></noscript>
 </form>
 
 <!-- Posts -->
-{{if .Posts}}
-<table>
-    <tr>
-        <th>Title</th>
-        <th>Created</th>
-        <th>ID</th>
-    </tr>
-    {{range .Posts}}
-    <tr>
-        <td><a href='/post/view?id={{.ID}}'>{{.Title}}</a></td>
-        <td>{{humanDate .CreatedAt}}</td>
-        <td>#{{.ID}}</td>
-    </tr>
-    {{end}}
-</table>
-{{else}}
-<p>There's nothing to see here... yet!</p>
-{{end}}
+<div class="posts-container">
+
+<div class="posts-container">
+  {{with .PostsByUser}} {{range .}}
+  <div class="post-card">
+    <div class="card-header">
+      <div class="user-data">
+        <div class="post-card-NameDate">
+          <p class="post-card-Username">By {{.OwnerName}}</p>
+          <span class="post-card-Date"
+            ><time datetime=""></time>{{humanDate .CreatedAt }}</span
+          >
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="title">
+        <a href="/post/view?id={{.ID}}" class="titleHome"> {{.Title}} </a>
+      </div>
+      <div class="desc"><pre class="postText_short">{{.Content}}</pre></div>
+    </div>
+    
+    <div class="card-footer">
+      <div class="category-tags-wrapper">
+        <p class="category-tag">{{.CategoryName}}</p>
+    </div>
+
+
+<div class="reactions-wrapper">
+  <div class="reaction-container">
+    <!-- <img src="/static/img/replies.png" alt="replies-image" class="reactionImg"> -->
+    <i class="fa fa-comment {{if .IsLiked}}green{{else}}no-color{{end}}"></i>
+  
+    <p>{{.CommentCount}}</p>
+  </div>
+  
+
+  <div class="reaction-container">
+    
+    <form action="/post/reaction?id={{.ID}}" method="POST" >
+      <button class="reaction-button" type="submit" name="reaction" value="like">
+        <i class="fa fa-thumbs-up {{if .IsLiked}}green{{else}}no-color{{end}}"></i>
+        {{.LikeCount}}
+      </button>
+  </form>
+  </div>
+      <div class="reaction-container">
+        
+        <form action="/post/reaction?id={{.ID}}" method="POST" >
+            <button class="reaction-button" type="submit" name="reaction" value="dislike">
+                <i class="fa fa-thumbs-down {{if .IsDisliked}}red{{else}}no-color{{end}}"></i>
+                {{.DislikeCount}}
+            </button>
+        </form>
+      </div>
+            <!-- Like and Dislike counts are clickable (submit via form) -->
+  
+  
+  
+    
+    
+  </div>
+</div>
+</div>
+
+
+    </div>
+  </div>
+  {{end}} {{end}}
+</div>
+
 
 <!-- Pagination -->
 <div style="margin-top: 1rem;">

@@ -14,10 +14,10 @@ type templateData struct {
 	FormErrors        map[string]string
 	Categories        []*models.Categories
 	Category          *models.Categories
-	Posts             []*models.Posts
-	LikedPosts        []*models.Posts
+	Posts             []*models.Post
+	LikedPosts        []*models.Post
 	IsAuthenticated   bool
-	Post              *models.Posts
+	Post              *models.Post
 	Comments          []*models.CommentReaction
 	CommentsNum       int
 	User              *models.User
@@ -30,9 +30,10 @@ type templateData struct {
 	PromotionRequests []*models.PromotionRequests
 	PromotionRequest  *models.PromotionRequests
 	Users             []*models.User
-
-	ReportReasons []*models.ReportReasons
-	Reports       []*models.Reports // or whatever your struct name is
+	PostsByUser        []*models.PostByUser
+	PostByUser        *models.PostByUser
+	ReportReasons     []*models.ReportReasons
+	Reports           []*models.Reports // or whatever your struct name is
 
 	// ERROR FIELDS:
 	ErrorCode int

@@ -19,7 +19,7 @@ import (
 )
 
 func main() {
-	addr := flag.String("addr", ":4000", "HTTP network address")
+	addr := flag.String("addr", ":4003", "HTTP network address")
 	dbPath := flag.String("db", "./data/app.db", "Path to SQLite database file")
 	flag.Parse()
 

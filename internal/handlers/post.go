@@ -54,13 +54,21 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Default reaction is none
-	post.IsLiked = false
-	post.IsDisliked = false
+
+	fullPost := &models.PostByUser{
+		PostUserAdditionals: models.PostUserAdditionals{
+			IsLiked:    false,
+			IsDisliked: false,
+		},
+		Post: *post,
+	}
 
 	// Check if user is authenticated
 	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
 		// If not authenticated, they can view the post but can't interact with reactions
+
+		// TODO: here it is not showing commnets need to check guest user view later
 		app.render(w, r, http.StatusOK, "view.html", templateData{
 			Category: category,
 			Post:     post,
@@ -88,9 +96,9 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	// Set flags based on the reaction type
 	if postReaction != nil {
 		if postReaction.Type == "like" {
-			post.IsLiked = true
+			fullPost.IsLiked = true
 		} else if postReaction.Type == "dislike" {
-			post.IsDisliked = true
+			fullPost.IsDisliked = true
 		}
 	}
 
@@ -104,7 +112,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	// Render the post with its reactions
 	data := templateData{
 		Category:      category,
-		Post:          post,
+		PostByUser:    fullPost,
 		Comments:      comments,
 		ReportReasons: reportReasons,
 		User:          user,

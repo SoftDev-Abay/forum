@@ -23,7 +23,7 @@ body::before {
     width: 100%;
     height: 100%;
     z-index: -1;
-    background: linear-gradient(45deg, #3498db, #2ecc71, #3498db, #2ecc71);
+    background: rgb(231, 231, 231);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
 }
@@ -605,3 +605,190 @@ footer {
         background-position: 0% 50%;
     }
 }
+
+.posts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    margin-bottom: 20px;
+    overflow-y: auto;
+    height: 100%;
+    margin-bottom: 200px;
+}
+
+.post-card {
+    max-height: 320px;
+    box-shadow: rgba(0.24, 0.24, 0.24, 0.24) 5px 5px 5px;
+    padding: 30px;
+    border-width: 1px;
+    border-color: var(--jasmine);
+    border-style: solid;
+    padding-top: 15px;
+    background-color: var(--gunmetal);
+    padding-bottom: 20px;
+  }
+  
+  .post-card .card-header {
+    align-items: center;
+    margin-bottom: 5px;
+  }
+  
+  .post-card .card-header img {
+    border-radius: 999999px;
+    width: 50px;
+    height: 50px;
+  }
+  
+  .post-card .card-header .user-data {
+    gap: 12px;
+  }
+  
+  .post-card .card-header .icon {
+    color: #34495e;
+  }
+  
+  .post-card .content {
+    margin-bottom: 25px;
+  }
+  
+  .post-card .content .title {
+    margin-bottom: 20px;
+    font-weight: 700;
+  }
+  .post-card .content .desc {
+    font-style: italic;
+  }
+  
+  .post-card .card-footer {
+    display: grid;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+    grid-auto-flow: column;
+  }
+  
+
+  .category-tags-wrapper {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  
+  .category-tag {
+    padding: 4px 7px;
+    border-radius: 5px;
+    background-color: teal;
+    color: var(--sunglow);
+    font-size: 13px;
+  }
+  .category {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+  
+  .category-label {
+    margin-bottom: 5px;
+    font-size: larger;
+  }
+  
+  .postCategory {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+  }
+  
+  .postReaction {
+    display: flex;
+    text-align: center;
+    font-size: 13px;
+    gap: 30px;
+    margin-bottom: 0;
+  }
+  .reaction {
+    float: right;
+  }
+  
+  .post-footer {
+    padding: 0.75em 18px;
+    display: flex;
+    justify-content: space-between;
+    background-color: var(--gunmetal);
+  }
+  
+  .categoryFooter {
+    margin-top: 0;
+    padding-top: 0;
+    padding: 4px 7px;
+    border-radius: 5px;
+    background-color: teal;
+    color: var(--sunglow);
+    font-size: 13px;
+  }
+  
+  .reactionImg {
+    height: 23px;
+    width: 23px;
+    margin-right: 10px;
+  }
+  
+  .reactionButton {
+    color: var(--jasmine);
+  }
+  
+
+.replies-container{
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #AAA;
+}
+
+  /* .posts-container{
+   margin-top: 60px;
+  } */
+  
+  .post-card-Username-post {
+    font-size: 12px;
+    color: var(--gunmetal);
+  }
+  
+  .post-card-Date-post {
+    font-size: 12px;
+    color: var(--gunmetal);
+  }
+  
+  .post-card-Username {
+      font-size: 12px;
+      color: var(--sunglow);
+    }
+    
+    .post-card-Date {
+      font-size: 12px;
+      color: var(--sunglow);
+    }
+  
+  .post-card-NameDate {
+    display: flex;
+    justify-content: space-between;
+  }
+
+
+
+  .reactions-wrapper{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    color: #AAA;
+  }
+
+  .reaction-container{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    color: #AAA;
+  }

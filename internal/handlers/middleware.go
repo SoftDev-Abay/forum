@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 )
 
@@ -34,9 +33,6 @@ func (app *Application) loginMiddware(next http.Handler, roles ...string) http.H
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
-
-		fmt.Println("roles", roles)
-		fmt.Println("role", user.Role)
 
 		if !contains(roles, user.Role) {
 			app.clientError(w, r, http.StatusForbidden)
