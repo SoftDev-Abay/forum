@@ -187,7 +187,7 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 	// 1) If user provided a file (not missing)
 	if imgErr != http.ErrMissingFile {
 		// 2) Validate file size (<= 20 MB)
-		const maxFileSize = 20 << 20 // 20 MB in bytes
+		const maxFileSize = 15 << 20 // 20 MB in bytes
 
 		v.CheckField(header.Size < maxFileSize, "image", "File too large: must be <= 20MB")
 
