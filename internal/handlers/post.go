@@ -71,7 +71,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		// TODO: here it is not showing commnets need to check guest user view later
 		app.render(w, r, http.StatusOK, "view.html", templateData{
 			Category: category,
-			Post:     post,
+			PostByUser:     fullPost,
 		})
 		return
 	}
