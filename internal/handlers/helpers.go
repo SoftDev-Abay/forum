@@ -57,6 +57,11 @@ func (app *Application) render(w http.ResponseWriter, r *http.Request, status in
 		if err != nil {
 			app.serverError(w, r, err)
 		}
+		data.NotificationsCount, err = app.Notifications.GetUsersNorificationsCount(data.User.ID)
+		if err != nil {
+			app.serverError(w, r, err)
+		}
+
 	} else {
 		data.IsAuthenticated = false
 	}

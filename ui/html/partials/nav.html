@@ -6,7 +6,8 @@
         {{with eq .User.Role "admin"}}
         <a href="/admin">ADM</a>
         {{end}}
-        <a href="/personal-page"> {{.User.Username}} </a>
+        <a href="/user/personal-page"> {{.User.Username}} </a>
+        <a href="/user/notifications">Notifications: {{.NotificationsCount}}</a>
         <a href="/logout">Logout</a>
     {{else}}
         <a href="/register">Register</a>

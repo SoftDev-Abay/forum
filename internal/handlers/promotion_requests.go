@@ -2,12 +2,10 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
-	"net/http"
-	"strconv"
-
 	"game-forum-abaliyev-ashirbay/internal/models"
 	"game-forum-abaliyev-ashirbay/internal/validator"
+	"net/http"
+	"strconv"
 )
 
 type PromotionRequestForm struct {
@@ -67,7 +65,6 @@ func (app *Application) promotionRequestCreatePost(w http.ResponseWriter, r *htt
 
 func (app *Application) changePromotionRequestStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		fmt.Println("id -1 ")
 
 		app.clientError(w, r, http.StatusMethodNotAllowed)
 		return
@@ -76,20 +73,15 @@ func (app *Application) changePromotionRequestStatus(w http.ResponseWriter, r *h
 	idStr := r.URL.Query().Get("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id < 1 {
-		fmt.Println("id 0 ", id)
 
 		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 
-	fmt.Println("id 1 ", id)
-
 	statusStr := r.FormValue("status")
 	var status string
 	if statusStr == "approved" {
 		status = "approved"
-
-		fmt.Println("TRAVELED HERE")
 
 		err = app.Users.UpdateRole(id, "moderator")
 		if err != nil {
@@ -100,7 +92,6 @@ func (app *Application) changePromotionRequestStatus(w http.ResponseWriter, r *h
 	} else if statusStr == "declined" {
 		status = "declined"
 	} else {
-		fmt.Println("id 2 ", id)
 
 		app.clientError(w, r, http.StatusBadRequest)
 		return

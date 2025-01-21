@@ -63,6 +63,7 @@ func main() {
 	promotionRequestsModel := &models.PromotionRequestsModel{DB: db}
 	reports := &models.ReportsModel{DB: db}
 	reportReasons := &models.ReportReasonsModel{DB: db}
+	notifications := &models.NotificationsModel{DB: db}
 
 	app := handlers.NewApp(
 		logger, 
@@ -83,6 +84,9 @@ func main() {
 		googleClientSecret, 
 		githubClientID, 
 		githubClientSecret,
+
+		// notifications
+		notifications,
 	)
 
 	srv := &http.Server{

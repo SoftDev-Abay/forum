@@ -117,7 +117,6 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	data := templateData{
 		Categories: categories,
 	}
-	fmt.Println(categories)
 
 	app.render(w, r, http.StatusOK, "create.html", data)
 }

@@ -70,8 +70,8 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 
 		// TODO: here it is not showing commnets need to check guest user view later
 		app.render(w, r, http.StatusOK, "view.html", templateData{
-			Category: category,
-			PostByUser:     fullPost,
+			Category:   category,
+			PostByUser: fullPost,
 		})
 		return
 	}
@@ -81,7 +81,6 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 	if err == nil && (user.Role == "moderator" || user.Role == "admin") {
 		reportReasons, _ = app.ReportReasons.GetAllReasons()
 		// if error, just ignore or handle
-
 	} else if err != nil {
 		app.serverError(w, r, err)
 	}
@@ -102,12 +101,11 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	comments, err := app.Comments.GetAllByPostIdAndUserId(userID, id)
+	comments, err := app.Comments.GetAllCommentsReactionsByPostID(id)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-	fmt.Println(reportReasons)
 
 	// Render the post with its reactions
 	data := templateData{
@@ -136,7 +134,6 @@ func (app *Application) postCreate(w http.ResponseWriter, r *http.Request) {
 	data := templateData{
 		Categories: categories,
 	}
-	fmt.Println(categories)
 
 	app.render(w, r, http.StatusOK, "create.html", data)
 }
@@ -147,7 +144,7 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(15 << 20) 
+	err := r.ParseMultipartForm(15 << 20)
 	if err != nil {
 		app.clientError(w, r, http.StatusBadRequest)
 		return
@@ -189,7 +186,7 @@ func (app *Application) postCreatePost(w http.ResponseWriter, r *http.Request) {
 		// 2) Validate file size (<= 20 MB)
 		const maxFileSize = 15 << 20 // 20 MB in bytes
 
-		v.CheckField(header.Size < maxFileSize, "image", "File too large: must be <= 20MB")
+		v.CheckField(header.Size < maxFileSize, "image", "File too large: must be <= 15MB")
 
 		v.CheckField(isAllowedImageExt(header.Filename), "image", "Only .jpg, .png, or .gif files are allowed")
 
@@ -273,7 +270,8 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 		app.clientError(w, r, http.StatusMethodNotAllowed)
 		return
 	}
-	// Get the post ID from the query parameters
+
+	// 1) Parse post ID from the query
 	postIDStr := r.URL.Query().Get("id")
 	postID, err := strconv.Atoi(postIDStr)
 	if err != nil || postID < 1 {
@@ -281,47 +279,28 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Get the reaction type (like or dislike) from the form
+	// 2) Get reaction type from form
 	reaction := r.FormValue("reaction")
 	if reaction != "like" && reaction != "dislike" {
 		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 
-	// reaction param can be either a like or a dislike
-	// post id is always that post id
-
-	// first I need to get the post reaction if exists
-
-	// three ways this can go:
-	// 1) it doesnt exist
-	// I need to create a post reaction with respectfull type: like/dislike
-
-	// 2) it exists and its the same - the reaction with same type was already made
-	// suppose its a like
-	// then I need to delete this reaction completely
-
-	// 3) it exists but its a different reaction type
-
-	// I need to update the found reaction to a different type
-
-	// lastly I need to update the count like dislike in post itself
-
-	// Get the user ID from the session or context
+	// 3) Get user ID from session
 	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
-		// If not authenticated, return an error or handle gracefully
 		app.notAuthenticated(w, r)
 		return
 	}
 
-	// Check current user reaction to decide if they are changing their reaction
+	// 4) Check existing reaction
 	existingReaction, err := app.PostReactions.GetReaction(userID, postID)
 	if err != nil && err != models.ErrNoReaction {
 		app.serverError(w, r, err)
 		return
 	}
 
+	// 5) Fetch the post to update counts and see the owner
 	post, err := app.Posts.Get(postID)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
@@ -335,61 +314,82 @@ func (app *Application) handlePostReaction(w http.ResponseWriter, r *http.Reques
 	newLikeCount := post.LikeCount
 	newDislikeCount := post.DislikeCount
 
+	// 6) Reaction logic
 	if existingReaction != nil {
-		// User already reacted, handle toggling reactions
+		// (A) Reaction already exists
 		if existingReaction.Type == reaction {
-			// If they click on the same reaction, it will be removed (toggle)
+			// (A1) Same reaction => remove (toggle off)
 			err = app.PostReactions.DeleteReaction(userID, postID)
 			if err != nil {
 				app.serverError(w, r, err)
 				return
 			}
-
 			if reaction == "like" {
-				newLikeCount -= 1
+				newLikeCount--
 			} else {
-				newDislikeCount -= 1
+				newDislikeCount--
 			}
-
 		} else {
-			// If they switch reactions, update accordingly
+			// (A2) Different reaction => update
 			err = app.PostReactions.UpdateReaction(userID, postID, reaction)
 			if err != nil {
 				app.serverError(w, r, err)
 				return
 			}
-
 			if reaction == "like" {
-				newLikeCount += 1
-				newDislikeCount -= 1
+				newLikeCount++
+				newDislikeCount--
 			} else {
-				newLikeCount -= 1
-				newDislikeCount += 1
+				newLikeCount--
+				newDislikeCount++
 			}
 		}
 	} else {
-		// No existing reaction, so we add the new one
+		// (B) No existing reaction => add
 		err = app.PostReactions.AddReaction(userID, postID, reaction)
 		if err != nil {
 			app.serverError(w, r, err)
 			return
 		}
-
 		if reaction == "like" {
-			newLikeCount += 1
+			newLikeCount++
 		} else {
-			newDislikeCount += 1
+			newDislikeCount++
 		}
-
 	}
-	err = app.Posts.UpdatePostLikeDislikeCounts(postID, newLikeCount, newDislikeCount)
 
+	// 7) Update the post's like/dislike counts in DB
+	err = app.Posts.UpdatePostLikeDislikeCounts(postID, newLikeCount, newDislikeCount)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	// After updating, redirect to the post view to update the UI
+	// 8) Add notification if the post belongs to a different user
+	//    (so you don't notify someone about their own reaction)
+	if post.OwnerID != userID {
+		var notifType string
+		if reaction == "like" {
+			notifType = "post_like"
+		} else {
+			notifType = "post_dislike"
+		}
+
+		// Insert a new notification for the post owner
+		_, notifErr := app.Notifications.Insert(
+			notifType,
+			userID,       // actor
+			post.OwnerID, // recipient
+			postID,
+			nil, // no comment_id for a post reaction
+		)
+		if notifErr != nil {
+			app.serverError(w, r, notifErr)
+			return
+		}
+	}
+
+	// 9) Finally, redirect to refresh the UI
 	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postID), http.StatusSeeOther)
 }
 
@@ -468,7 +468,7 @@ func (app *Application) postDelete(w http.ResponseWriter, r *http.Request) {
 		err = os.Remove(imagePath)
 		if err != nil && !os.IsNotExist(err) {
 			// Log the error but don't fail the request
-			fmt.Printf("Error deleting image file: %s, error: %v\n", imagePath, err)
+			app.Logger.Error("Error deleting image file: %s, error: %v\n", imagePath, err)
 		}
 	}
 

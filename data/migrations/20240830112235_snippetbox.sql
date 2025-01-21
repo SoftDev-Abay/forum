@@ -108,7 +108,7 @@ CREATE TABLE Promotion_Requests (
 
 CREATE TABLE Notifications (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    type TEXT CHECK(type IN ('like', 'dislike', 'comment')) NOT NULL,
+    type TEXT CHECK(type IN ('post_like', 'post_dislike', 'comment', 'comment_like', 'comment_dislike')) NOT NULL,
     actor_id INTEGER NOT NULL,
     recipient_id INTEGER NOT NULL,
     post_id INTEGER NOT NULL,
