@@ -648,6 +648,9 @@ footer {
   
   .post-card .content {
     margin-bottom: 25px;
+    overflow: visible; /* Ensure it doesn't cut off content */
+    word-wrap: break-word; /* Break long words */
+    overflow-wrap: break-word; /* Fallback for older browsers */
   }
   
   .post-card .content .title {
@@ -833,4 +836,12 @@ footer {
 
 .textarea-add-comment{
     height: 126px;
+}
+
+.truncated-text {
+  white-space: nowrap;         /* Prevent the text from wrapping to the next line */
+  overflow: hidden;           /* Hide the overflowing text */
+  text-overflow: ellipsis;    /* Add the ellipsis (...) */
+  width: 100%;               /* Set a specific width for the container */
+  display: block;             /* Ensure it's a block element or inline-block */
 }
