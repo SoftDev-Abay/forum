@@ -348,9 +348,6 @@ footer {
 
 
 
-.textarea-add-comment{
-    height: 126px;
-}
 
 
 
@@ -359,8 +356,8 @@ footer {
  * Lista de Comentarios
  =======================*/
 .comments-container {
-	margin: 60px auto 15px;
-	width: 768px;
+	/* margin: 60px auto 15px; */
+	/* width: 768px; */
 }
 
 .comments-container h1 {
@@ -375,7 +372,7 @@ footer {
 }
 
 .comments-list {
-	margin-top: 30px;
+	/* margin-top: 30px; */
 	position: relative;
 }
 
@@ -617,7 +614,6 @@ footer {
 }
 
 .post-card {
-    max-height: 320px;
     box-shadow: rgba(0.24, 0.24, 0.24, 0.24) 5px 5px 5px;
     padding: 30px;
     border-width: 1px;
@@ -626,6 +622,9 @@ footer {
     padding-top: 15px;
     background-color: var(--gunmetal);
     padding-bottom: 20px;
+  }
+.post-card-small {
+    max-height: 320px;
   }
   
   .post-card .card-header {
@@ -657,6 +656,12 @@ footer {
   }
   .post-card .content .desc {
     font-style: italic;
+  }
+  
+  .post-card .content img {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
   }
   
   .post-card .card-footer {
@@ -792,3 +797,40 @@ footer {
     align-items: center;
     color: #AAA;
   }
+
+
+  .post-view-wrapper{
+    display: flex;
+    flex-direction: column;
+    gap: 30px
+  }
+
+
+  .comment-input-container{
+    position: relative;
+  }
+
+  .comment-add-button{
+    position: absolute;
+    right: 10px;
+    bottom: 15px;
+    z-index: 1;
+    padding: 5px 10px;
+    color: white;
+    border-radius: 5px;
+    background-color: #4EB722;
+    cursor: pointer;
+    text-transform: none;
+    text-decoration: none;
+  }
+  .comment-add-button:hover{
+    background-color: #62CB31;
+    color: white;
+    text-transform: none;
+    text-decoration: none;
+  }
+
+
+.textarea-add-comment{
+    height: 126px;
+}

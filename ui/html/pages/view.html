@@ -1,136 +1,153 @@
 {{define "title"}}Post #{{.PostByUser.ID}}{{end}}
 
 {{define "main"}}
-{{if .User}}
-{{if or (eq .User.Role "moderator") (eq .User.Role "admin")}}
-<form action="/post/report" method="POST" style="margin-top:1rem;">
-    <input type="hidden" name="post_id" value="{{.PostByUser.ID}}" />
-
-    <label for="report_reason_id">Reason:</label>
-    <select name="report_reason_id" id="report_reason_id">
-        {{range .ReportReasons}}
-        <option value="{{.ID}}">{{.Text}}</option>
-        {{end}}
-    </select>
-    <br><br>
-
-    <label for="description">Description:</label><br>
-    <textarea name="description" rows="3" cols="40" placeholder="Optional extra details..."></textarea>
-    <br><br>
-
-    <input type="submit" value="Report Post">
-</form>
-
-<br>
-<br>
-{{end}}
-
-    {{end}}
-{{if .PostByUser}}
-
-<div class='snippet'>
-    <div class='metadata'>
-        <strong>{{.PostByUser.Title}}</strong>
-        <span>#{{.PostByUser.ID}}</span>
-    </div>
-    {{with .PostByUser.ImgUrl}}
-    <img src="http://localhost:4000/imgs/{{.}}"/>
-    {{end}}
-
-    <pre><code>{{.PostByUser.Content}}</code></pre>
-
-    <div class='metadata'>
-        <!-- Like and Dislike counts are clickable (submit via form) -->
-        <form action="/post/reaction?id={{.PostByUser.ID}}" method="POST" style="display:inline;">
-            <button class="reaction-button" type="submit" name="reaction" value="like">
-                <i class="fa fa-thumbs-up {{if .PostByUser.IsLiked}}green{{else}}no-color{{end}}"></i>
-                {{.PostByUser.LikeCount}}
-            </button>
-        </form>
-        <form action="/post/reaction?id={{.PostByUser.ID}}" method="POST" style="display:inline;">
-            <button class="reaction-button" type="submit" name="reaction" value="dislike">
-                <i class="fa fa-thumbs-down {{if .PostByUser.IsDisliked}}red{{else}}no-color{{end}}"></i>
-                {{.PostByUser.DislikeCount}}
-            </button>
-        </form>
-    </div>
 
 
-
-
-<form action="/post/delete?id={{.PostByUser.ID}}" method="post">
-
-    <input type="submit" value="Delete">
-</form>
-
-<form action="/comments/create" method="post">
-
-    <input type="hidden" name="postId" value="{{.PostByUser.ID}}"  >
+<div class="post-view-wrapper">
+    {{if .PostByUser}}
+    {{with.PostByUser}}
+    <div class="post-card post-card-full">
+        <div class="card-header">
+          <div class="user-data">
+            <div class="post-card-NameDate">
+              <p class="post-card-Username">By {{.OwnerName}}</p>
+              <span class="post-card-Date">
+                <time datetime="">{{humanDate .CreatedAt}}</time>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="content">
+          <div class="title">
+            <p class="titleHome">{{.Title}}</p>
+          </div>
+          {{with .ImgUrl}}
+            <img src="/imgs/{{.}}" alt="Post Image"/>
+          {{end}}
     
-
-    <div class="form-group">
-        <label for="content">Add comment:</label><br>
-        <textarea class="textarea-add-comment" id="content" name="text" rows="5" cols="80" required></textarea><br><br>
-    </div>
-
-    <input type="submit" value="Add">
-</form>
-
-<ul id="comments-list" class="comments-list">
-
-
-
-{{end}}
- 
-{{range .Comments}}
-<li>
-    <div class="comment-main-level">
-        <!-- Avatar -->
-        <div class="comment-avatar"><img src="http://i9.photobucket.com/albums/a88/creaticode/avatar_2_zps7de12f8b.jpg" alt=""></div>
-        <!-- Contenedor del Comentario -->
-        <div class="comment-box">
-            <div class="comment-head">
-                <h6 class="comment-name"><a href="http://creaticode.com/blog">User ID: {{.UserID}}</a></h6>
-                <span>{{humanDate .CreatedAt}}</span>
-                <!-- <i class="fa fa-reply"></i> -->
-
-                <form action="/comments/reaction?id={{.ID}}" method="POST" style="display:inline;">
-                    <input type="hidden" name="postId" value="{{.PostID}}"  >
-
-                    <button class="reaction-button" type="submit" name="reaction" value="like">
-                        <i class="fa fa-thumbs-up {{if .IsLiked}}green{{else}}no-color{{end}}"></i>
-                        {{.LikeCount}}
-                    </button>
-                </form>
-                <form action="/comments/reaction?id={{.ID}}" method="POST" style="display:inline;">
-                    <input type="hidden" name="postId" value="{{.PostID}}"  >
-                    
-                    <button class="reaction-button" type="submit" name="reaction" value="dislike">
-                        <i class="fa fa-thumbs-down {{if .IsDisliked}}red{{else}}no-color{{end}}"></i>
-                        {{.DislikeCount}}
-                    </button>
-                </form>
-
-
-                <form action="/comments/delete?id={{.ID}}" method="POST" style="display:inline;">
-                    <input type="submit" value="Delete">
-                </form>
-
+          <div class="desc">
+            <pre class="postText_short">{{.Content}}</pre>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="category-tags-wrapper">
+            <p class="category-tag">{{.CategoryName}}</p>
+          </div>
+          <div class="reactions-wrapper">
+            <div class="reaction-container">
+              <i class="fa fa-comment no-color"></i>
+              <p>{{.CommentCount}}</p>
             </div>
-            <div class="comment-content">
-                {{.Text}}
+            <div class="reaction-container">
+              <form action="/post/reaction?id={{.ID}}" method="POST">
+                <button class="reaction-button" type="submit" name="reaction" value="like">
+                  <i class="fa fa-thumbs-up {{if .IsLiked}}green{{else}}no-color{{end}}"></i>
+                  {{.LikeCount}}
+                </button>
+              </form>
             </div>
+            <div class="reaction-container">
+              <form action="/post/reaction?id={{.ID}}" method="POST">
+                <button class="reaction-button" type="submit" name="reaction" value="dislike">
+                  <i class="fa fa-thumbs-down {{if .IsDisliked}}red{{else}}no-color{{end}}"></i>
+                  {{.DislikeCount}}
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
     </div>
-</li>
-{{end}}
-
-
-
-</ul>
-
-<br>
+    {{end}}
+    
+    
+    <!-- Comments Input -->
+    <form action="/comments/create" class="comment-input-container"  method="post">
+        <input type="hidden" name="postId" value="{{.PostByUser.ID}}">
+        <textarea placeholder="Add commnet"  class="textarea-add-comment" id="content" name="text" rows="5" cols="80" required></textarea>
+        <button class="comment-add-button" type="submit" value="Add">Comment</button>
+    </form>
+    
+    <!-- Comments section -->
+    
+    <div class="comments-container">
+        <ul id="comments-list" class="comments-list">
+            {{range .Comments}}
+            <li>
+                <div class="comment-main-level">
+                    <!-- Avatar -->
+                    <div class="comment-avatar">
+                        <img src="http://i9.photobucket.com/albums/a88/creaticode/avatar_2_zps7de12f8b.jpg" alt="User Avatar">
+                    </div>
+                    <!-- Comment Content -->
+                    <div class="comment-box">
+                        <div class="comment-head">
+                            <h6 class="comment-name">
+                                <a href="http://creaticode.com/blog">User ID: {{.UserID}}</a>
+                            </h6>
+                            <span>{{humanDate .CreatedAt}}</span>
+                            <form action="/comments/reaction?id={{.ID}}" method="POST" style="display:inline;">
+                                <input type="hidden" name="postId" value="{{.PostID}}">
+                                <button class="reaction-button" type="submit" name="reaction" value="like">
+                                    <i class="fa fa-thumbs-up {{if .IsLiked}}green{{else}}no-color{{end}}"></i>
+                                    {{.LikeCount}}
+                                </button>
+                            </form>
+                            <form action="/comments/reaction?id={{.ID}}" method="POST" style="display:inline;">
+                                <input type="hidden" name="postId" value="{{.PostID}}">
+                                <button class="reaction-button" type="submit" name="reaction" value="dislike">
+                                    <i class="fa fa-thumbs-down {{if .IsDisliked}}red{{else}}no-color{{end}}"></i>
+                                    {{.DislikeCount}}
+                                </button>
+                            </form>
+                            <form action="/comments/delete?id={{.ID}}" method="POST" style="display:inline;">
+                                <input type="submit" value="Delete">
+                            </form>
+                        </div>
+                        <div class="comment-content">
+                            {{.Text}}
+                        </div>
+                    </div>
+                </div>
+            </li>
+            {{end}}
+        </ul>
+    </div>
+        
+    {{end}}
+    
+    <!-- Report logic -->
+    {{if .User}}
+      {{if eq .User.Role "moderator"}}
+      <form action="/post/report" method="POST" style="margin-top:1rem;">
+          <input type="hidden" name="post_id" value="{{.PostByUser.ID}}" />
+    
+          <label for="report_reason_id">Reason:</label>
+          <select name="report_reason_id" id="report_reason_id">
+              {{range .ReportReasons}}
+              <option value="{{.ID}}">{{.Text}}</option>
+              {{end}}
+          </select>
+          <br><br>
+    
+          <label for="description">Description:</label><br>
+          <textarea name="description" rows="3" cols="40" placeholder="Optional extra details..."></textarea>
+          <br><br>
+    
+          <input type="submit" value="Report Post">
+      </form>
+      <br>
+      <br>
+      {{end}}
+    {{end}}
+    
+    
+    <!-- Admin Controls Logic -->
+    <form action="/post/delete?id={{.PostByUser.ID}}" method="post">
+        <input type="submit" value="Delete">
+    </form>
+    
+    
+    
+    {{end}}
 </div>
-
-{{end}}
 
