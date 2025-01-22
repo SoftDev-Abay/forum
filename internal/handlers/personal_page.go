@@ -10,7 +10,7 @@ func (app *Application) personalPage(w http.ResponseWriter, r *http.Request) {
 		app.clientError(w, r, http.StatusMethodNotAllowed)
 		return
 	}
-	
+
 	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
 		app.notAuthenticated(w, r)
@@ -38,10 +38,17 @@ func (app *Application) personalPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	comments, err := app.Comments.GetAllByUserId(userID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	// 4) Prepare template data
 	data := templateData{
-		Posts:      userPosts,  // The user’s own posts
-		LikedPosts: likedPosts, // The user’s liked posts
+		Posts:               userPosts,  // The user’s own posts
+		LikedPosts:          likedPosts, // The user’s liked posts
+		CommentPostAddition: comments,
 	}
 
 	app.render(w, r, http.StatusOK, "personal_page.html", data)

@@ -862,3 +862,9 @@ footer {
   width: 100%;               /* Set a specific width for the container */
   display: block;             /* Ensure it's a block element or inline-block */
 }
+
+.personal-page-wrapper{
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}

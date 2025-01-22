@@ -1,6 +1,9 @@
 {{define "title"}}Personal page{{end}}
 
 {{define "main"}}
+<div class="personal-page-wrapper">
+
+<div class="personal-page-section">
 <h2>Personal page</h2>
 <div class="snippet">
     <div class="metadata">
@@ -8,9 +11,11 @@
         <span>Email: {{.User.Email }} </span>
     </div>
 </div>
-<br>
+</div>
 
-<h2>My Posts</h2>
+
+<div class="personal-page-section">
+    <h2>My Posts</h2>
 {{if .Posts}}  <!-- Start condition for posts -->
 <table>
 <tr>
@@ -38,6 +43,8 @@
 </table>
 {{end}}  <!-- End condition for posts -->
 
+</div>
+<div class="personal-page-section">
 <h2>Liked Posts</h2>
 {{if .LikedPosts}}  <!-- Assuming LikedPosts is a separate field from Posts -->
 <table>
@@ -57,8 +64,38 @@
 </table>
 {{end}}  <!-- End condition for liked posts -->
 
+</div>
+<div class="personal-page-section">
 
+<h2>Your comments</h2>
+
+{{if .CommentPostAddition}}  <!-- Start condition for comments -->
+<table>
+<tr>
+<th>Post Title</th>
+<th>Comment</th>
+<th>Created</th>
+<th>ID</th>
+</tr>
+{{range .CommentPostAddition}}
+<tr>
+<td><a href='/post/view?id={{.PostID}}'>{{.PostTitle}}</a></td>
+<td>{{.Text}}</td>
+<td>{{humanDate .CreatedAt}}</td>
+<td>#{{.ID}}</td>
+</tr>
+{{end}}
+</table>
+{{end}}  <!-- End condition for comments -->
+
+</div>
+
+
+<div class="personal-page-section">
 <a href="/promotion_requests">All promotion requests</a>
 <a href="/promotion_requests/create">Request a promotion</a>
+</div>
+    
+</div>
 
 {{end}}  <!-- End main block -->

@@ -16,6 +16,7 @@ type CommentsModelInterface interface {
 	GetAllByPostId(postId int) ([]*Comment, error)
 	DeleteCommentById(id int) error
 	GetAllCommentsReactionsByPostID(postID int) ([]*CommentReaction, error)
+	GetAllByUserId(userId int) ([]*CommentPostAddition, error)
 }
 
 type Comment struct {
@@ -37,6 +38,11 @@ type CommentReaction struct {
 	CommentAdditionals
 	IsLiked    bool
 	IsDisliked bool
+}
+
+type CommentPostAddition struct {
+	Comment
+	PostTitle string
 }
 
 type CommentsModel struct {
@@ -290,4 +296,37 @@ func (m *CommentsModel) DeleteCommentById(id int) error {
 	}
 
 	return nil
+}
+
+// a function that will get all comments by userid
+func (m *CommentsModel) GetAllByUserId(userId int) ([]*CommentPostAddition, error) {
+	stmt := `SELECT c.id, c.post_id, c.user_id, c.text, c.like_count, c.dislike_count, c.created_at, p.title
+			FROM Comments c
+			INNER JOIN Posts p ON p.id = c.post_id
+			WHERE user_id = ?`
+
+	rows, err := m.DB.Query(stmt, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var comments []*CommentPostAddition
+
+	for rows.Next() {
+		comment := &CommentPostAddition{}
+
+		err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Text, &comment.LikeCount, &comment.DislikeCount, &comment.CreatedAt, &comment.PostTitle)
+		if err != nil {
+			return nil, err
+		}
+
+		comments = append(comments, comment)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return comments, nil
 }

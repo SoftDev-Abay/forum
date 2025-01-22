@@ -10,30 +10,31 @@ import (
 )
 
 type templateData struct {
-	Form              interface{}
-	FormErrors        map[string]string
-	Categories        []*models.Categories
-	Category          *models.Categories
-	Posts             []*models.Post
-	LikedPosts        []*models.Post
-	IsAuthenticated   bool
-	Post              *models.Post
-	Comments          []*models.CommentReaction
-	CommentsNum       int
-	User              *models.User
-	PostReaction      *models.PostReaction
-	CurrentPage       int
-	TotalPages        int
-	CurrentCatID      int
-	VisiblePages      []int
-	PageSize          int
-	PromotionRequests []*models.PromotionRequests
-	PromotionRequest  *models.PromotionRequests
-	Users             []*models.User
-	PostsByUser       []*models.PostByUser
-	PostByUser        *models.PostByUser
-	ReportReasons     []*models.ReportReasons
-	Reports           []*models.Reports // or whatever your struct name is
+	Form                interface{}
+	FormErrors          map[string]string
+	Categories          []*models.Categories
+	Category            *models.Categories
+	Posts               []*models.Post
+	LikedPosts          []*models.Post
+	IsAuthenticated     bool
+	Post                *models.Post
+	Comments            []*models.CommentReaction
+	CommentsNum         int
+	User                *models.User
+	PostReaction        *models.PostReaction
+	CurrentPage         int
+	TotalPages          int
+	CurrentCatID        int
+	VisiblePages        []int
+	PageSize            int
+	PromotionRequests   []*models.PromotionRequests
+	PromotionRequest    *models.PromotionRequests
+	Users               []*models.User
+	PostsByUser         []*models.PostByUser
+	PostByUser          *models.PostByUser
+	ReportReasons       []*models.ReportReasons
+	Reports             []*models.Reports // or whatever your struct name is
+	CommentPostAddition []*models.CommentPostAddition
 
 	// ERROR FIELDS:
 	ErrorCode int
