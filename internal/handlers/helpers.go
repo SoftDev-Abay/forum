@@ -119,7 +119,7 @@ func (app *Application) getAuthenticatedUserID(r *http.Request) (int, error) {
 func isAllowedImageExt(filename string) bool {
 	ext := strings.ToLower(filepath.Ext(filename))
 	switch ext {
-	case ".jpg", ".jpeg", ".png", ".gif":
+	case ".jpg", ".jpeg", ".png", ".gif", ".svg":
 		return true
 	}
 	return false
