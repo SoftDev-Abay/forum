@@ -103,12 +103,14 @@
                                       {{.DislikeCount}}
                                   </button>
                               </form>
-                                {{if or (eq $.User.Role "moderator") (or (eq $.User.Role "admin") (eq $.User.ID .UserID))}}
-                                <form action="/comments/delete?id={{.ID}}" method="POST" >
-                                  <button class="reaction-button" type="submit" value="delete">
-                                  <i class="fa fa-trash"></i>
-                                  </button>
-                                </form>
+                                {{if $.User}}
+                                  {{if or (eq $.User.Role "moderator") (or (eq $.User.Role "admin") (eq $.User.ID .UserID))}}
+                                  <form action="/comments/delete?id={{.ID}}" method="POST" >
+                                    <button class="reaction-button" type="submit" value="delete">
+                                    <i class="fa fa-trash"></i>
+                                    </button>
+                                  </form>
+                                  {{end}}
                                 {{end}}
                               </form>
                             </div>
@@ -154,13 +156,14 @@
     
     
     <!-- Admin Controls Logic -->
-
+    {{if .User}}
     {{if or (eq .User.Role "admin") (eq .User.Role "moderator")}}
 
     <form action="/post/delete?id={{.PostByUser.ID}}" method="post">
         <input type="submit" value="Delete Post">
     </form>
     
+    {{end}}
     {{end}}
     
     

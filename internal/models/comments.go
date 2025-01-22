@@ -27,11 +27,16 @@ type Comment struct {
 	CreatedAt    time.Time
 }
 
+type CommentAdditionals struct {
+	Username string
+}
+
+
 type CommentReaction struct {
 	Comment
+	CommentAdditionals
 	IsLiked    bool
 	IsDisliked bool
-	Username string
 }
 
 type CommentsModel struct {
@@ -128,8 +133,6 @@ func (m *CommentsModel) GetAllByPostIdAndUserId(userId int, postId int) ([]*Comm
 
 	return comments, nil
 }
-
-
 
 // updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
 func (m *CommentsModel) UpdateCommentLikeDislikeCounts(commentID int, likeCount int, dislikeCount int) error {
@@ -234,7 +237,6 @@ func (m *CommentsModel) GetAllCommentsReactionsByPostID(postID int) ([]*CommentR
 
 	return commentReactions, nil
 }
-
 
 // updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
 func (m *CommentsModel) DeleteCommentsByPostId(postID int) error {

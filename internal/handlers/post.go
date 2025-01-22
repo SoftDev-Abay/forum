@@ -69,9 +69,15 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		},
 		Post: *post,
 		PostAdditionals: models.PostAdditionals{
-			OwnerName: author.Username,
+			OwnerName:    author.Username,
 			CategoryName: category.Name,
 		},
+	}
+
+	comments, err := app.Comments.GetAllCommentsReactionsByPostID(id)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
 	}
 
 	// Check if user is authenticated
@@ -83,6 +89,7 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		app.render(w, r, http.StatusOK, "view.html", templateData{
 			Category:   category,
 			PostByUser: fullPost,
+			Comments:   comments,
 		})
 		return
 	}
@@ -110,12 +117,6 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		} else if postReaction.Type == "dislike" {
 			fullPost.IsDisliked = true
 		}
-	}
-
-	comments, err := app.Comments.GetAllCommentsReactionsByPostID(id)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
 	}
 
 	// Render the post with its reactions
