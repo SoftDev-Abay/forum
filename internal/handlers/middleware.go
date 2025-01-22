@@ -3,6 +3,8 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"sync"
+	"time"
 )
 
 type contextKey string
@@ -10,6 +12,18 @@ type contextKey string
 const userContextKey contextKey = "userContextKey"
 
 var defaultRoles = []string{"user", "moderator", "admin"}
+
+var (
+	// requests stores for each IP a slice of timestamps (recent request times).
+	requests = make(map[string][]time.Time)
+	mu       sync.Mutex
+
+	// MaxRequests defines how many requests an IP can make in TimeWindow.
+	MaxRequests = 100
+
+	// TimeWindow is how far back we count requests for rate-limiting.
+	TimeWindow = time.Minute
+)
 
 func (app *Application) loginMiddware(next http.Handler, roles ...string) http.Handler {
 	// If no roles are passed, use the default roles
@@ -44,7 +58,7 @@ func (app *Application) loginMiddware(next http.Handler, roles ...string) http.H
 	})
 }
 
-func secureHeaders(next http.Handler) http.Handler {
+func (app *Application) secureHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Security-Policy",
 			"default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com")
@@ -56,28 +70,34 @@ func secureHeaders(next http.Handler) http.Handler {
 	})
 }
 
-// func (app *Application) logRequest(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		app.infoLog.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
-// 		next.ServeHTTP(w, r)
-// 	})
-// }
+func (app *Application) rateLimitMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        ip := clientIP(r)
+        now := time.Now()
 
-// func (app *Application) recoverPanic(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		// Create a deferred function (which will always be run in the event
-// 		// of a panic as Go unwinds the stack).
-// 		defer func() {
-// 			// Use the builtin recover function to check if there has been a
-// 			// panic or not. If there has...
-// 			if err := recover(); err != nil {
-// 				// Set a "Connection: close" header on the response.
-// 				w.Header().Set("Connection", "close")
-// 				// Call the app.serverError helper method to return a 500
-// 				// Internal Server response.
-// 				app.serverError(w, fmt.Errorf("%s", err))
-// 			}
-// 		}()
-// 		next.ServeHTTP(w, r)
-// 	})
-// }
+        mu.Lock()
+        defer mu.Unlock() 
+
+        timestamps := requests[ip]
+        filtered := make([]time.Time, 0, len(timestamps))
+        for _, t := range timestamps {
+            if now.Sub(t) < TimeWindow {
+                filtered = append(filtered, t)
+            }
+        }
+
+        if len(filtered) >= MaxRequests {
+			app.clientError(w, r, http.StatusTooManyRequests)
+            return
+        }
+
+        filtered = append(filtered, now)
+        requests[ip] = filtered
+
+        next.ServeHTTP(w, r)
+    })
+}
+
+func clientIP(r *http.Request) string {
+    return r.RemoteAddr 
+}

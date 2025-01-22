@@ -73,5 +73,5 @@ func (app *Application) Routes() http.Handler {
 
 	// Notifications
 
-	return mux
+	return app.rateLimitMiddleware(app.secureHeaders(mux))
 }
