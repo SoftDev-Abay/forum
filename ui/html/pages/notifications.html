@@ -1,0 +1,38 @@
+{{define "title"}}Notifications{{end}}
+
+{{define "main"}}
+<h2>Notifications</h2>
+
+<table>
+    <thead>
+    <tr>
+        <th>From</th>
+        <th>Action</th>
+        <th>Post</th>
+        <th>Comment Excerpt</th>
+        <th>Date</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{range .UserNotifications}}
+    <tr {{if not .IsRead}}class="unread"{{end}}>
+        <td>{{.ActorUsername}}</td>
+        <td>
+            {{if eq .Type "post_like"}}liked your post
+            {{else if eq .Type "post_dislike"}}disliked your post
+            {{else if eq .Type "comment"}}commented on your post
+            {{else if eq .Type "comment_like"}}liked your comment
+            {{else if eq .Type "comment_dislike"}}disliked your comment
+            {{else}}[{{.Type}}]{{end}}
+        </td>
+        <td>
+            <a href="/post/view?id={{.PostID}}">#{{.PostID}}</a>
+        </td>
+        <td>{{.CommentText}}</td>
+        <td>{{.CreatedAt}}</td>
+    </tr>
+    {{end}}
+    </tbody>
+</table>
+
+{{end}}

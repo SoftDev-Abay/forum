@@ -30,7 +30,7 @@ type templateData struct {
 	PromotionRequests []*models.PromotionRequests
 	PromotionRequest  *models.PromotionRequests
 	Users             []*models.User
-	PostsByUser        []*models.PostByUser
+	PostsByUser       []*models.PostByUser
 	PostByUser        *models.PostByUser
 	ReportReasons     []*models.ReportReasons
 	Reports           []*models.Reports // or whatever your struct name is
@@ -38,6 +38,21 @@ type templateData struct {
 	// ERROR FIELDS:
 	ErrorCode int
 	ErrorMsg  string
+
+	// advanced features
+	NotificationsCount int
+	Notifications      []*models.Notifications
+	UserNotifications  []NotificationView
+}
+
+type NotificationView struct {
+	ID            int
+	Type          string
+	ActorUsername string
+	PostID        int
+	CommentText   string
+	CreatedAt     string
+	IsRead        bool
 }
 
 var functions = template.FuncMap{

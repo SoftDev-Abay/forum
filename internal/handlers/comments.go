@@ -36,17 +36,35 @@ func (app *Application) createCommentPost(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	_, err = app.Comments.Insert(postId, userId, text, time.Now())
+	commentID, err := app.Comments.Insert(postId, userId, text, time.Now())
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	fmt.Println("Comment created successfully")
+	// 1) Notify the post owner (except if the commenter is the same user).
+	post, err := app.Posts.Get(postId)
+	if err == nil && post.OwnerID != userId {
+		// Insert a new notification of type "comment".
+		// The actor is userId, the recipient is post.OwnerID,
+		// the post is postId, and the new comment's ID is 'commentID'.
+		_, nErr := app.Notifications.Insert(
+			"comment",
+			userId,           // actor
+			post.OwnerID,     // recipient
+			postId,           // post
+			&commentID,       // comment
+		)
+		if nErr != nil {
+			app.serverError(w, r, nErr)
+			return
+		}
+	}
 
 	// Redirect to the post view page
 	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postId), http.StatusSeeOther)
 }
+
 
 func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -63,77 +81,58 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 	commentIDStr := r.URL.Query().Get("id")
 	commentID, err := strconv.Atoi(commentIDStr)
 	if err != nil || commentID < 1 {
-		fmt.Println("Error: Invalid comment ID or comment ID less than 1")
 		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
-	fmt.Println("Comment ID:", commentID)
 
 	postId, err := strconv.Atoi(r.PostForm.Get("postId"))
 	if err != nil || postId < 1 {
-		fmt.Println("error tut :")
-
-		fmt.Println(err)
 		app.notFound(w, r)
 		return
 	}
-	fmt.Println("postId ID:", postId)
 
 	// Get the reaction type (like or dislike) from the form
 	reaction := r.FormValue("reaction")
 	if reaction != "like" && reaction != "dislike" {
-		fmt.Println("Error: Invalid reaction type:", reaction)
 		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
-	fmt.Println("Reaction type:", reaction)
-
 	// Get the user ID from the session or context
 	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
 		// If not authenticated, return an error or handle gracefully
-		fmt.Println("Error: User not authenticated")
 		app.notAuthenticated(w, r)
 		return
 	}
-	fmt.Println("User ID:", userID)
 
 	// Check current user reaction to decide if they are changing their reaction
 	existingReaction, err := app.CommentsReactions.GetReaction(userID, commentID)
 	if err != nil && err != models.ErrNoReaction {
-		fmt.Println("Error: Unable to get existing reaction:", err)
 		app.serverError(w, r, err)
 		return
 	}
-	fmt.Println("Existing reaction:", existingReaction)
 
 	// Fetch the comment
 	comment, err := app.Comments.Get(commentID)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
-			fmt.Println("Error: Comment not found")
 			app.notFound(w, r)
 		} else {
-			fmt.Println("Error: Server error fetching comment:", err)
 			app.serverError(w, r, err)
 		}
 		return
 	}
-	fmt.Println("Comment fetched:", comment)
 
 	// Initialize like and dislike counts
 	newLikeCount := comment.LikeCount
 	newDislikeCount := comment.DislikeCount
-	fmt.Println("Initial Like Count:", newLikeCount, "Initial Dislike Count:", newDislikeCount)
 
 	if existingReaction != nil {
 		// User already reacted, handle toggling reactions
 		if existingReaction.Type == reaction {
 			// If they click on the same reaction, it will be removed (toggle)
-			fmt.Println("User clicked the same reaction, deleting reaction.")
 			err = app.CommentsReactions.DeleteReaction(userID, commentID)
 			if err != nil {
-				fmt.Println("Error: Deleting reaction failed:", err)
 				app.serverError(w, r, err)
 				return
 			}
@@ -143,14 +142,11 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 			} else {
 				newDislikeCount -= 1
 			}
-			fmt.Println("Updated Like Count:", newLikeCount, "Updated Dislike Count:", newDislikeCount)
 
 		} else {
 			// If they switch reactions, update accordingly
-			fmt.Println("User switched reaction, updating reaction.")
 			err = app.CommentsReactions.UpdateReaction(userID, commentID, reaction)
 			if err != nil {
-				fmt.Println("Error: Updating reaction failed:", err)
 				app.serverError(w, r, err)
 				return
 			}
@@ -162,14 +158,11 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 				newLikeCount -= 1
 				newDislikeCount += 1
 			}
-			fmt.Println("Updated Like Count:", newLikeCount, "Updated Dislike Count:", newDislikeCount)
 		}
 	} else {
 		// No existing reaction, so we add the new one
-		fmt.Println("No existing reaction, adding new one.")
 		err = app.CommentsReactions.AddReaction(userID, commentID, reaction)
 		if err != nil {
-			fmt.Println("Error: Adding reaction failed:", err)
 			app.serverError(w, r, err)
 			return
 		}
@@ -179,21 +172,37 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 		} else {
 			newDislikeCount += 1
 		}
-		fmt.Println("Updated Like Count:", newLikeCount, "Updated Dislike Count:", newDislikeCount)
 	}
 
 	// Update the like and dislike counts on the comment
 	err = app.Comments.UpdateCommentLikeDislikeCounts(commentID, newLikeCount, newDislikeCount)
 	if err != nil {
-		fmt.Println("Error: Updating comment counts failed:", err)
 		app.serverError(w, r, err)
 		return
 	}
-	fmt.Println("Successfully updated comment like/dislike counts.")
+	if comment.UserID != userID {
+		var notifType string
+		if reaction == "like" {
+			notifType = "comment_like"
+		} else {
+			notifType = "comment_dislike"
+		}
+
+		_, nErr := app.Notifications.Insert(
+			notifType,
+			userID,          // actor
+			comment.UserID,  // recipient
+			comment.PostID,  // post
+			&comment.ID,     // comment
+		)
+		if nErr != nil {
+			app.serverError(w, r, nErr)
+			return
+		}
+	}
 
 	// After updating, redirect to the comment view to update the UI
 	redirectURL := fmt.Sprintf("/post/view?id=%d", postId)
-	fmt.Println("Redirecting to:", redirectURL)
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 

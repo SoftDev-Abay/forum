@@ -106,6 +106,23 @@ CREATE TABLE Promotion_Requests (
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 
+CREATE TABLE Notifications (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    type TEXT CHECK(type IN ('post_like', 'post_dislike', 'comment', 'comment_like', 'comment_dislike')) NOT NULL,
+    actor_id INTEGER NOT NULL,
+    recipient_id INTEGER NOT NULL,
+    post_id INTEGER NOT NULL,
+    comment_id INTEGER,
+    created_at DATETIME NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT 0,
+
+    FOREIGN KEY (actor_id) REFERENCES Users(id),
+    FOREIGN KEY (recipient_id) REFERENCES Users(id),
+    FOREIGN KEY (post_id) REFERENCES Posts(id),
+    FOREIGN KEY (comment_id) REFERENCES Comments(id)
+);
+
+
 -- +goose StatementEnd
 
 -- +goose Down

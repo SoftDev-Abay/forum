@@ -38,7 +38,8 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("/comments/reaction", app.loginMiddware(http.HandlerFunc(app.handleCommentReaction)))
 	mux.Handle("/comments/delete", app.loginMiddware(http.HandlerFunc(app.commentDelete), "moderator", "admin"))
 
-	mux.Handle("/personal-page", app.loginMiddware(http.HandlerFunc(app.personalPage)))
+	mux.Handle("/user/personal-page", app.loginMiddware(http.HandlerFunc(app.personalPage)))
+	mux.Handle("/user/notifications", app.loginMiddware(http.HandlerFunc(app.notificationsPage)))
 
 	mux.HandleFunc("/register", app.register)
 	mux.HandleFunc("/register/post", app.registerPost)
@@ -69,6 +70,8 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("/admin/categories/create", app.loginMiddware(http.HandlerFunc(app.categoryCreate), "admin"))
 	mux.Handle("/admin/categories/create/post", app.loginMiddware(http.HandlerFunc(app.categoryCreatePost), "admin"))
 	mux.Handle("/admin/categories/delete", app.loginMiddware(http.HandlerFunc(app.DeleteCategory), "admin"))
+
+	// Notifications
 
 	return mux
 }

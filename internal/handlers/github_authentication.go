@@ -61,7 +61,6 @@ func (app *Application) githubCallback(w http.ResponseWriter, r *http.Request) {
 	user, err := app.Users.GetByUsernameOrEmail(githubUser.Login)
 	if err == models.ErrNoRecord {
 		hashedPass, _ := app.generateHashPassword("github_oauth_auto")
-		fmt.Println(githubUser)
 		newID, insertErr := app.Users.Insert(githubUser.Email, githubUser.Login, hashedPass, true)
 		if insertErr != nil {
 			app.serverError(w, r, insertErr)

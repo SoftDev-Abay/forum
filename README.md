@@ -1,44 +1,14 @@
-New column users for the role - user moderator admistrator
+Chto ostalos' sdelat':
+1. comments are duplicating when you like your own comment
+2. Advanced Features optional: we have to create an activity page that tracks the user own activity. In other words, a page that :
+<ul>
+    <li>Shows the user created posts</li>
+    <li>Shows where the user left a like or a dislike</li>
+    <li>Shows where and what the user has been commenting. For this, the comment will have to be shown, as well as the post commented</li>
+    <li>we have to create a section where you will be able to Edit/Remove posts and comments.</li>
+</ul>
 
+WEE WEE encourage you to add any other additional features that you find relevant.
 
-Reports
-
-moderator_id - int
-post_id - int
-report_reason_id - int
-description - string
-dateCreated - date
-admin_id - int
-admin_responce  - null/string
-
-
-Report_Reasons
-
-id - int
-text - string
-
-
-
-Promotion_Requests
-
-user_id - int
-description - string
-status - bool
-
-
-
-
-
-
-
-
-
-route for submitting a request to become a moderator
-
-admin should have a table where he can approve a user to become a moderator
-
-
-promotion routes
-
-
-
+3. Code refactoring (adding service and repo directories)
+4. Security optional: Full

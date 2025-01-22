@@ -6,6 +6,10 @@ import (
 	"log/slog"
 )
 
+const comment = "comment"
+const like = "like"
+const dislike = "dislike"
+
 type Application struct {
 	Logger            *slog.Logger
 	TemplateCache     map[string]*template.Template
@@ -22,9 +26,12 @@ type Application struct {
 
 	// authentication optional
 	GoogleClientID     string
-    GoogleClientSecret string
-    GitHubClientID     string
-    GitHubClientSecret string
+	GoogleClientSecret string
+	GitHubClientID     string
+	GitHubClientSecret string
+
+	// Notifications optional
+	Notifications models.NotificationsModelInterface
 }
 
 func NewApp(
@@ -40,10 +47,11 @@ func NewApp(
 	promotionRequests *models.PromotionRequestsModel,
 	reports *models.ReportsModel, // <-- ADD THIS
 	reportReasons *models.ReportReasonsModel, // <-- AND THIS
-	googleClientID     string,
-    googleClientSecret string,
-    gitHubClientID     string,
-    gitHubClientSecret string,
+	googleClientID string,
+	googleClientSecret string,
+	gitHubClientID string,
+	gitHubClientSecret string,
+	notifications *models.NotificationsModel,
 ) *Application {
 	app := &Application{
 		Logger:            logger,
@@ -59,10 +67,12 @@ func NewApp(
 		Reports:           reports,       // <-- SET HERE
 		ReportReasons:     reportReasons, // <-- SET HERE
 
-		GoogleClientID: googleClientID,
+		GoogleClientID:     googleClientID,
 		GoogleClientSecret: googleClientSecret,
-		GitHubClientID: gitHubClientID,
+		GitHubClientID:     gitHubClientID,
 		GitHubClientSecret: gitHubClientSecret,
+
+		Notifications: notifications,
 	}
 	return app
 }

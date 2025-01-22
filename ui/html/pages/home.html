@@ -35,7 +35,7 @@
       <div class="card-header">
         <div class="user-data">
           <div class="post-card-NameDate">
-            <p class="post-card-Username">By {{.OwnerName}}</p>
+            <p class="post-card-Username">By {{.OwnerName}} {{if ne .ImgUrl ""}}(image included){{end}}</p>
             <span class="post-card-Date">
               <time datetime="">{{humanDate .CreatedAt}}</time>
             </span>

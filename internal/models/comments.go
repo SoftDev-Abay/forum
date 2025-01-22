@@ -14,6 +14,7 @@ type CommentsModelInterface interface {
 	DeleteCommentsByPostId(postID int) error
 	GetAllByPostId(postId int) ([]*Comment, error)
 	DeleteCommentById(id int) error
+	GetAllCommentsReactionsByPostID(postID int) ([]*CommentReaction, error)
 }
 
 type Comment struct {
@@ -127,6 +128,8 @@ func (m *CommentsModel) GetAllByPostIdAndUserId(userId int, postId int) ([]*Comm
 	return comments, nil
 }
 
+
+
 // updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
 func (m *CommentsModel) UpdateCommentLikeDislikeCounts(commentID int, likeCount int, dislikeCount int) error {
 	// Update the post's like/dislike counts in the database
@@ -177,6 +180,58 @@ func (m *CommentsModel) GetAllByPostId(postId int) ([]*Comment, error) {
 
 	return comments, nil
 }
+
+func (m *CommentsModel) GetAllCommentsReactionsByPostID(postID int) ([]*CommentReaction, error) {
+	stmt := `SELECT c.id, c.post_id, c.user_id, c.text, c.like_count, c.dislike_count, c.created_at,
+                    cr.type as reaction, cr.user_id as reaction_user_id
+             FROM Comments c
+             LEFT JOIN Comment_Reactions cr ON cr.comment_id = c.id
+             WHERE c.post_id = ?
+             ORDER BY c.created_at ASC`
+
+	rows, err := m.DB.Query(stmt, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var commentReactions []*CommentReaction
+
+	for rows.Next() {
+		var reaction sql.NullString
+		var reactionUserID sql.NullInt64
+
+		comment := &CommentReaction{}
+
+		err := rows.Scan(
+			&comment.ID,
+			&comment.PostID,
+			&comment.UserID,
+			&comment.Text,
+			&comment.LikeCount,
+			&comment.DislikeCount,
+			&comment.CreatedAt,
+			&reaction,
+			&reactionUserID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Initialize IsLiked and IsDisliked based on the reaction
+		comment.IsLiked = reaction.Valid && reaction.String == "like"
+		comment.IsDisliked = reaction.Valid && reaction.String == "dislike"
+
+		commentReactions = append(commentReactions, comment)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return commentReactions, nil
+}
+
 
 // updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
 func (m *CommentsModel) DeleteCommentsByPostId(postID int) error {
