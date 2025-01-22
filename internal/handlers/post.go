@@ -53,6 +53,13 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	author, err := app.Users.GetById(post.OwnerID)
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	// Default reaction is none
 
 	fullPost := &models.PostByUser{
@@ -61,6 +68,10 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 			IsDisliked: false,
 		},
 		Post: *post,
+		PostAdditionals: models.PostAdditionals{
+			OwnerName: author.Username,
+			CategoryName: category.Name,
+		},
 	}
 
 	// Check if user is authenticated
@@ -409,7 +420,7 @@ func (app *Application) postDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// (Optional) Check if the user is authenticated and/or is allowed to delete the post.
-	_, err = app.getAuthenticatedUserID(r)
+	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
 		app.notAuthenticated(w, r)
 		return
@@ -423,6 +434,19 @@ func (app *Application) postDelete(w http.ResponseWriter, r *http.Request) {
 		} else {
 			app.serverError(w, r, err)
 		}
+		return
+	}
+
+	// check the post owner
+	user, err := app.Users.GetById(userID)
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	if post.OwnerID != userID && user.Role != "moderator" && user.Role != "admin" {
+		app.clientError(w, r, http.StatusForbidden)
 		return
 	}
 
@@ -475,4 +499,203 @@ func (app *Application) postDelete(w http.ResponseWriter, r *http.Request) {
 	// Redirect or respond with success
 	// e.g., redirect to homepage or back to some list:
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (app *Application) postEdit(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the `id` from the query parameters (e.g. /post/edit?id=123).
+	idStr := r.URL.Query().Get("id")
+	postID, err := strconv.Atoi(idStr)
+	if err != nil || postID < 1 {
+		app.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	// Retrieve the post to edit
+	post, err := app.Posts.Get(postID)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w, r)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+
+	// Check if the user is authenticated
+	userID, err := app.getAuthenticatedUserID(r)
+	if err != nil {
+		app.notAuthenticated(w, r)
+		return
+	}
+
+	// Ensure the authenticated user is the owner of the post
+	if post.OwnerID != userID {
+		app.clientError(w, r, http.StatusForbidden)
+		return
+	}
+
+	categories, err := app.Categories.GetAll()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	data := templateData{
+		Post:       post,
+		Categories: categories,
+	}
+
+	app.render(w, r, http.StatusOK, "edit_post.html", data)
+}
+
+func (app *Application) postEditPost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		fmt.Printf("Method: %s\n", r.Method)
+
+		app.clientError(w, r, http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the `id` from the query parameters (e.g. /post/edit?id=123).
+	idStr := r.URL.Query().Get("id")
+	postID, err := strconv.Atoi(idStr)
+	if err != nil || postID < 1 {
+		app.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	// Check if the user is authenticated
+	userID, err := app.getAuthenticatedUserID(r)
+	if err != nil {
+		app.notAuthenticated(w, r)
+		return
+	}
+
+	// Retrieve the post to check ownership
+	post, err := app.Posts.Get(postID)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w, r)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+
+	// Ensure the authenticated user is the owner of the post
+	if post.OwnerID != userID {
+		app.clientError(w, r, http.StatusForbidden)
+		return
+	}
+
+	err = r.ParseMultipartForm(15 << 20)
+	if err != nil {
+		app.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	title := r.FormValue("title")
+	categoryIDStr := r.FormValue("category_id")
+	content := r.FormValue("content")
+
+	// Retrieve the file from the form. The field name is "image".
+	file, header, imgErr := r.FormFile("image")
+	if imgErr != nil && imgErr != http.ErrMissingFile {
+		app.serverError(w, r, imgErr)
+		return
+	}
+	defer func() {
+		if file != nil {
+			file.Close()
+		}
+	}()
+
+	// Convert categoryID
+	categoryID, err := strconv.Atoi(categoryIDStr)
+	if err != nil || categoryID < 1 {
+		categoryID = 0
+	}
+
+	// Validation checks for title & content
+	form := PostForm{
+		Title:      title,
+		CategoryID: categoryID,
+		Content:    content,
+	}
+	v := validator.Validator{}
+
+	if imgErr != http.ErrMissingFile {
+		const maxFileSize = 15 << 20 // 20 MB in bytes
+		v.CheckField(header.Size < maxFileSize, "image", "File too large: must be <= 15MB")
+		v.CheckField(isAllowedImageExt(header.Filename), "image", "Only .jpg, .png, or .gif files are allowed")
+	}
+
+	v.CheckField(validator.NotBlank(form.Title), "title", "Title must not be blank")
+	v.CheckField(validator.MaxChars(form.Title, 100), "title", "Title must not be more than 100 characters long")
+	v.CheckField(validator.MinChars(form.Title, 5), "title", "Title must be at least 5 characters long")
+	v.CheckField(form.CategoryID > 0, "category_id", "You must select a category")
+	v.CheckField(validator.NotBlank(form.Content), "content", "Content must not be blank")
+	v.CheckField(validator.MinChars(form.Content, 10), "content", "Content must be at least 10 characters long")
+
+	if !v.Valid() {
+		categories, err := app.Categories.GetAll()
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		data := templateData{
+			Form:       form,
+			FormErrors: v.FieldErrors,
+			Categories: categories,
+		}
+
+		app.render(w, r, http.StatusUnprocessableEntity, "edit_post.html", data)
+		return
+	}
+
+	imgUrl := post.ImgUrl
+	if imgErr != http.ErrMissingFile {
+		newFileName, err := generateUniqueFileName(header.Filename)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		dst, err := os.Create("./data/imgs/" + newFileName)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		defer dst.Close()
+
+		_, err = io.Copy(dst, file)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		imgUrl = newFileName
+
+		if post.ImgUrl != "" {
+			imagePath := "./data/imgs/" + post.ImgUrl
+			err = os.Remove(imagePath)
+			if err != nil && !os.IsNotExist(err) {
+				app.Logger.Error("Error deleting image file: %s, error: %v\n", imagePath, err)
+			}
+		}
+	}
+
+	err = app.Posts.UpdatePost(postID, title, content, imgUrl, categoryID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postID), http.StatusSeeOther)
 }

@@ -81,27 +81,39 @@
                     <!-- Comment Content -->
                     <div class="comment-box">
                         <div class="comment-head">
-                            <h6 class="comment-name">
-                                <a href="http://creaticode.com/blog">User ID: {{.UserID}}</a>
-                            </h6>
-                            <span>{{humanDate .CreatedAt}}</span>
-                            <form action="/comments/reaction?id={{.ID}}" method="POST" style="display:inline;">
-                                <input type="hidden" name="postId" value="{{.PostID}}">
-                                <button class="reaction-button" type="submit" name="reaction" value="like">
-                                    <i class="fa fa-thumbs-up {{if .IsLiked}}green{{else}}no-color{{end}}"></i>
-                                    {{.LikeCount}}
-                                </button>
-                            </form>
-                            <form action="/comments/reaction?id={{.ID}}" method="POST" style="display:inline;">
-                                <input type="hidden" name="postId" value="{{.PostID}}">
-                                <button class="reaction-button" type="submit" name="reaction" value="dislike">
-                                    <i class="fa fa-thumbs-down {{if .IsDisliked}}red{{else}}no-color{{end}}"></i>
-                                    {{.DislikeCount}}
-                                </button>
-                            </form>
-                            <form action="/comments/delete?id={{.ID}}" method="POST" style="display:inline;">
-                                <input type="submit" value="Delete">
-                            </form>
+                            <div class="comment-head-info">
+                              <h6 class="comment-name">
+                                  <a href="http://creaticode.com/blog">{{.Username}}</a>
+                              </h6>
+                              <span>{{humanDate .CreatedAt}}</span>
+                            </div>
+
+                            <div class="comment-head-controls">
+                              <form action="/comments/reaction?id={{.ID}}" method="POST" >
+                                  <input type="hidden" name="postId" value="{{.PostID}}">
+                                  <button class="reaction-button" type="submit" name="reaction" value="like">
+                                      <i class="fa fa-thumbs-up {{if .IsLiked}}green{{else}}no-color{{end}}"></i>
+                                      {{.LikeCount}}
+                                  </button>
+                              </form>
+                              <form action="/comments/reaction?id={{.ID}}" method="POST" >
+                                  <input type="hidden" name="postId" value="{{.PostID}}">
+                                  <button class="reaction-button" type="submit" name="reaction" value="dislike">
+                                      <i class="fa fa-thumbs-down {{if .IsDisliked}}red{{else}}no-color{{end}}"></i>
+                                      {{.DislikeCount}}
+                                  </button>
+                              </form>
+                                {{if or (eq $.User.Role "moderator") (or (eq $.User.Role "admin") (eq $.User.ID .UserID))}}
+                                <form action="/comments/delete?id={{.ID}}" method="POST" >
+                                  <button class="reaction-button" type="submit" value="delete">
+                                  <i class="fa fa-trash"></i>
+                                  </button>
+                                </form>
+                                {{end}}
+                              </form>
+                            </div>
+
+
                         </div>
                         <div class="comment-content">
                             {{.Text}}
@@ -142,10 +154,14 @@
     
     
     <!-- Admin Controls Logic -->
+
+    {{if or (eq .User.Role "admin") (eq .User.Role "moderator")}}
+
     <form action="/post/delete?id={{.PostByUser.ID}}" method="post">
-        <input type="submit" value="Delete">
+        <input type="submit" value="Delete Post">
     </form>
     
+    {{end}}
     
     
     {{end}}

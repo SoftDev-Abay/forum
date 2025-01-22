@@ -29,14 +29,17 @@ func (app *Application) Routes() http.Handler {
 
 	mux.Handle("/post/create/post", app.loginMiddware(http.HandlerFunc(app.postCreatePost)))
 	mux.Handle("/post/create", app.loginMiddware(http.HandlerFunc(app.postCreate)))
-	mux.Handle("/post/delete", app.loginMiddware(http.HandlerFunc(app.postDelete), "moderator", "admin"))
+	mux.Handle("/post/delete", app.loginMiddware(http.HandlerFunc(app.postDelete)))
+	mux.Handle("/post/edit", app.loginMiddware(http.HandlerFunc(app.postEdit)))
+	mux.Handle("/post/edit/post", app.loginMiddware(http.HandlerFunc(app.postEditPost)))
+
 	// Report system routes
 	mux.Handle("/post/report", app.loginMiddware(http.HandlerFunc(app.ReportPost), "moderator", "admin"))
 	mux.Handle("/post/report/list", app.loginMiddware(http.HandlerFunc(app.adminReportList), "admin"))
 
 	mux.Handle("/comments/create", app.loginMiddware(http.HandlerFunc(app.createCommentPost)))
 	mux.Handle("/comments/reaction", app.loginMiddware(http.HandlerFunc(app.handleCommentReaction)))
-	mux.Handle("/comments/delete", app.loginMiddware(http.HandlerFunc(app.commentDelete), "moderator", "admin"))
+	mux.Handle("/comments/delete", app.loginMiddware(http.HandlerFunc(app.commentDelete)))
 
 	mux.Handle("/user/personal-page", app.loginMiddware(http.HandlerFunc(app.personalPage)))
 	mux.Handle("/user/notifications", app.loginMiddware(http.HandlerFunc(app.notificationsPage)))
