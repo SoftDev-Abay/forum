@@ -70,7 +70,7 @@ func (app *Application) secureHeaders(next http.Handler) http.Handler {
 		// allow scripts from your domain & fontawesome.com
 		"script-src 'self' 'unsafe-inline' https://use.fontawesome.com https://ka-f.fontawesome.com; " +
 		// allow images only from your site (adjust if you need external images)
-		"img-src 'self'; " +
+		"img-src 'self' http://i9.photobucket.com/albums/a88/creaticode/avatar_2_zps7de12f8b.jpg; " +
 		// no objects
 		"object-src 'none'; " +
 		// limit connections to same-origin
