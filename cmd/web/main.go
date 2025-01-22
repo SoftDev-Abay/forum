@@ -19,7 +19,7 @@ import (
 )
 
 func main() {
-	addr := flag.String("addr", ":4000", "HTTP network address")
+	addr := flag.String("addr", ":8433", "HTTP network address")
 	dbPath := flag.String("db", "./data/app.db", "Path to SQLite database file")
 	flag.Parse()
 
@@ -28,7 +28,7 @@ func main() {
 	err := loadEnvFile(".env")
 	if err != nil {
 		logger.Warn("could not load .env file: %v\n", err)
-		// you can continue if .env is optional or exit if it's required
+		// continue because not required.
 	}
 
 	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
@@ -66,23 +66,23 @@ func main() {
 	notifications := &models.NotificationsModel{DB: db}
 
 	app := handlers.NewApp(
-		logger, 
-		templateCache, 
-		categoriesModel, 
-		postsModel, 
-		users, 
+		logger,
+		templateCache,
+		categoriesModel,
+		postsModel,
+		users,
 		session,
 		postRecactions,
-		commentsModel, 
-		commentReactions, 
-		promotionRequestsModel, 
-		reports, 
-		reportReasons, 
+		commentsModel,
+		commentReactions,
+		promotionRequestsModel,
+		reports,
+		reportReasons,
 
 		// authentication
-		googleClientID, 
-		googleClientSecret, 
-		githubClientID, 
+		googleClientID,
+		googleClientSecret,
+		githubClientID,
 		githubClientSecret,
 
 		// notifications
@@ -117,7 +117,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("app/certs/server.crt", "app/certs/server.key")
 	logger.Error(err.Error())
 }
 
