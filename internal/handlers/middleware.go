@@ -68,7 +68,7 @@ func (app *Application) secureHeaders(next http.Handler) http.Handler {
 		// allow fonts from google & fontawesome
 		"font-src https://fonts.gstatic.com https://use.fontawesome.com data:; " +
 		// allow scripts from your domain & fontawesome.com
-		"script-src 'self' https://use.fontawesome.com https://ka-f.fontawesome.com; " +
+		"script-src 'self' 'unsafe-inline' https://use.fontawesome.com https://ka-f.fontawesome.com; " +
 		// allow images only from your site (adjust if you need external images)
 		"img-src 'self'; " +
 		// no objects
