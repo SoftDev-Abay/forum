@@ -6,11 +6,14 @@ import (
 	"log/slog"
 )
 
-const comment = "comment"
-const like = "like"
-const dislike = "dislike"
+const (
+	comment = "comment"
+	like    = "like"
+	dislike = "dislike"
+)
 
 type Application struct {
+	Addr              *string
 	Logger            *slog.Logger
 	TemplateCache     map[string]*template.Template
 	Users             models.UserModelInterface
@@ -35,6 +38,7 @@ type Application struct {
 }
 
 func NewApp(
+	addr *string,
 	logger *slog.Logger,
 	teamplateCache map[string]*template.Template,
 	categories *models.CategoriesModel,
@@ -54,6 +58,7 @@ func NewApp(
 	notifications *models.NotificationsModel,
 ) *Application {
 	app := &Application{
+		Addr:              addr,
 		Logger:            logger,
 		TemplateCache:     teamplateCache,
 		Categories:        categories,

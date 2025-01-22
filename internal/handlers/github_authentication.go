@@ -11,7 +11,7 @@ import (
 )
 
 func (app *Application) githubLogin(w http.ResponseWriter, r *http.Request) {
-    redirectURI := "http://localhost:4000/auth/github/callback"
+    redirectURI := "https://localhost" + *app.Addr + "/auth/github/callback"
     state := "someRandomState"
 
     githubURL := fmt.Sprintf(

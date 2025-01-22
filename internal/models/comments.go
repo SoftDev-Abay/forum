@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -30,7 +31,6 @@ type Comment struct {
 type CommentAdditionals struct {
 	Username string
 }
-
 
 type CommentReaction struct {
 	Comment
@@ -186,13 +186,29 @@ func (m *CommentsModel) GetAllByPostId(postId int) ([]*Comment, error) {
 }
 
 func (m *CommentsModel) GetAllCommentsReactionsByPostID(postID int) ([]*CommentReaction, error) {
-	stmt := `SELECT c.id, c.post_id, c.user_id, u.username,  c.text, c.like_count, c.dislike_count, c.created_at,
-                    cr.type as reaction, cr.user_id as reaction_user_id
-             FROM Comments c
-			 INNER JOIN Users u ON u.id = c.user_id
-             LEFT JOIN Comment_Reactions cr ON cr.comment_id = c.id
-             WHERE c.post_id = ?
-             ORDER BY c.created_at ASC`
+	stmt := `SELECT 
+				c.id AS comment_id, 
+				c.post_id, 
+				c.user_id, 
+				u.username,  
+				c.text, 
+				c.like_count, 
+				c.dislike_count, 
+				c.created_at,
+				GROUP_CONCAT(cr.type || ':' || cr.user_id, ', ') AS reactions
+			FROM 
+				Comments c
+			INNER JOIN 
+				Users u ON u.id = c.user_id
+			LEFT JOIN 
+				Comment_Reactions cr ON cr.comment_id = c.id
+			WHERE 
+				c.post_id = ?
+			GROUP BY 
+				c.id, c.post_id, c.user_id, u.username, c.text, c.like_count, c.dislike_count, c.created_at
+			ORDER BY 
+				c.created_at ASC;
+`
 
 	rows, err := m.DB.Query(stmt, postID)
 	if err != nil {
@@ -203,8 +219,7 @@ func (m *CommentsModel) GetAllCommentsReactionsByPostID(postID int) ([]*CommentR
 	var commentReactions []*CommentReaction
 
 	for rows.Next() {
-		var reaction sql.NullString
-		var reactionUserID sql.NullInt64
+		var reactions sql.NullString
 
 		comment := &CommentReaction{}
 
@@ -217,16 +232,31 @@ func (m *CommentsModel) GetAllCommentsReactionsByPostID(postID int) ([]*CommentR
 			&comment.LikeCount,
 			&comment.DislikeCount,
 			&comment.CreatedAt,
-			&reaction,
-			&reactionUserID,
+			&reactions,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		// Initialize IsLiked and IsDisliked based on the reaction
-		comment.IsLiked = reaction.Valid && reaction.String == "like"
-		comment.IsDisliked = reaction.Valid && reaction.String == "dislike"
+		// Process reactions to initialize IsLiked and IsDisliked
+		comment.IsLiked = false
+		comment.IsDisliked = false
+
+		if reactions.Valid {
+			reactionEntries := strings.Split(reactions.String, ", ")
+			for _, entry := range reactionEntries {
+				parts := strings.Split(entry, ":")
+				if len(parts) == 2 {
+					reactionType := parts[0]
+					// Update IsLiked or IsDisliked based on reaction type
+					if reactionType == "like" {
+						comment.IsLiked = true
+					} else if reactionType == "dislike" {
+						comment.IsDisliked = true
+					}
+				}
+			}
+		}
 
 		commentReactions = append(commentReactions, comment)
 	}

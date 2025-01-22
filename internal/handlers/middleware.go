@@ -59,15 +59,30 @@ func (app *Application) loginMiddware(next http.Handler, roles ...string) http.H
 }
 
 func (app *Application) secureHeaders(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Security-Policy",
-			"default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com")
-		w.Header().Set("Referrer-Policy", "origin-when-cross-origin")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.Header().Set("X-Frame-Options", "deny")
-		w.Header().Set("X-XSS-Protection", "0")
-		next.ServeHTTP(w, r)
-	})
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Content-Security-Policy",
+    	// main directives
+		"default-src 'self'; " +
+		// allow inline styles if Font Awesome injects CSS
+		"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://use.fontawesome.com; " +
+		// allow fonts from google & fontawesome
+		"font-src https://fonts.gstatic.com https://use.fontawesome.com data:; " +
+		// allow scripts from your domain & fontawesome.com
+		"script-src 'self' https://use.fontawesome.com https://ka-f.fontawesome.com; " +
+		// allow images only from your site (adjust if you need external images)
+		"img-src 'self'; " +
+		// no objects
+		"object-src 'none'; " +
+		// limit connections to same-origin
+		"connect-src 'self';",
+)
+        w.Header().Set("Referrer-Policy", "origin-when-cross-origin")
+        w.Header().Set("X-Content-Type-Options", "nosniff")
+        w.Header().Set("X-Frame-Options", "deny")
+        w.Header().Set("X-XSS-Protection", "0")
+        
+        next.ServeHTTP(w, r)
+    })
 }
 
 func (app *Application) rateLimitMiddleware(next http.Handler) http.Handler {

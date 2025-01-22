@@ -15,7 +15,7 @@ func (app *Application) googleLogin(w http.ResponseWriter, r *http.Request) {
 	// This is the authorization URL with required query params:
 	// - client_id, redirect_uri, scope, response_type=code, state, etc.
 
-	redirectURI := "http://localhost:4000/auth/google/callback"
+	redirectURI := "https://localhost" + *app.Addr + "/auth/google/callback"
 
 	// Typically you want a random "state" token to prevent CSRF, but keep it simple for now
 	state := "xyz123"
@@ -40,7 +40,7 @@ func (app *Application) googleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 2) Exchange the code for an access token
-	tokenResp, err := exchangeGoogleCodeForToken(app.GoogleClientID, app.GoogleClientSecret, code)
+	tokenResp, err := app.exchangeGoogleCodeForToken(app.GoogleClientID, app.GoogleClientSecret, code)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -104,8 +104,8 @@ type GoogleTokenResponse struct {
 	IdToken     string `json:"id_token"`
 }
 
-func exchangeGoogleCodeForToken(clientID, clientSecret, code string) (*GoogleTokenResponse, error) {
-	redirectURI := "http://localhost:4000/auth/google/callback"
+func (app *Application) exchangeGoogleCodeForToken(clientID, clientSecret, code string) (*GoogleTokenResponse, error) {
+	redirectURI := "https://localhost" + *app.Addr + "/auth/google/callback"
 
 	data := url.Values{}
 	data.Set("code", code)

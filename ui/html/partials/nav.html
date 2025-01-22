@@ -1,8 +1,8 @@
 {{define "nav"}}
 <nav>
     <a href='/'>Home</a>
-    <a href="/post/create">Post</a>
     {{if .IsAuthenticated}}
+        <a href="/post/create">Create post</a>
         {{with eq .User.Role "admin"}}
         <a href="/admin">ADM</a>
         {{end}}

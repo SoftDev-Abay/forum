@@ -1,19 +1,21 @@
--- SQLite
-
--- delete from users where id > 0;
-
-CREATE TABLE Notifications (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    type TEXT CHECK(type IN ('post_like', 'post_dislike', 'comment', 'comment_like', 'comment_dislike')) NOT NULL,
-    actor_id INTEGER NOT NULL,
-    recipient_id INTEGER NOT NULL,
-    post_id INTEGER NOT NULL,
-    comment_id INTEGER,
-    created_at DATETIME NOT NULL,
-    is_read BOOLEAN NOT NULL DEFAULT 0,
-
-    FOREIGN KEY (actor_id) REFERENCES Users(id),
-    FOREIGN KEY (recipient_id) REFERENCES Users(id),
-    FOREIGN KEY (post_id) REFERENCES Posts(id),
-    FOREIGN KEY (comment_id) REFERENCES Comments(id)
-);
+SELECT 
+    c.id, 
+    c.post_id, 
+    c.user_id, 
+    u.username, 
+    c.text, 
+    c.like_count, 
+    c.dislike_count, 
+    c.created_at,
+    cr.type AS reaction, 
+    cr.user_id AS reaction_user_id
+FROM 
+    Comments c
+INNER JOIN 
+    Users u ON u.id = c.user_id
+LEFT JOIN 
+    Comment_Reactions cr ON cr.comment_id = c.id
+WHERE 
+    c.post_id = 14
+ORDER BY 
+    c.created_at ASC;

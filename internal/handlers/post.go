@@ -80,6 +80,8 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println(comments)
+
 	// Check if user is authenticated
 	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {

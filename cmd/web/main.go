@@ -66,6 +66,7 @@ func main() {
 	notifications := &models.NotificationsModel{DB: db}
 
 	app := handlers.NewApp(
+		addr,
 		logger,
 		templateCache,
 		categoriesModel,
