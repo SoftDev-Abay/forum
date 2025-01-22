@@ -50,10 +50,10 @@ func (app *Application) createCommentPost(w http.ResponseWriter, r *http.Request
 		// the post is postId, and the new comment's ID is 'commentID'.
 		_, nErr := app.Notifications.Insert(
 			"comment",
-			userId,           // actor
-			post.OwnerID,     // recipient
-			postId,           // post
-			&commentID,       // comment
+			userId,       // actor
+			post.OwnerID, // recipient
+			postId,       // post
+			&commentID,   // comment
 		)
 		if nErr != nil {
 			app.serverError(w, r, nErr)
@@ -64,7 +64,6 @@ func (app *Application) createCommentPost(w http.ResponseWriter, r *http.Request
 	// Redirect to the post view page
 	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postId), http.StatusSeeOther)
 }
-
 
 func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -190,10 +189,10 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 
 		_, nErr := app.Notifications.Insert(
 			notifType,
-			userID,          // actor
-			comment.UserID,  // recipient
-			comment.PostID,  // post
-			&comment.ID,     // comment
+			userID,         // actor
+			comment.UserID, // recipient
+			comment.PostID, // post
+			&comment.ID,    // comment
 		)
 		if nErr != nil {
 			app.serverError(w, r, nErr)
@@ -222,7 +221,7 @@ func (app *Application) commentDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// (Optional) Check if the user is authenticated and/or is allowed to delete the post.
-	_, err = app.getAuthenticatedUserID(r)
+	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
 		app.notAuthenticated(w, r)
 		return
@@ -236,6 +235,20 @@ func (app *Application) commentDelete(w http.ResponseWriter, r *http.Request) {
 		} else {
 			app.serverError(w, r, err)
 		}
+		return
+	}
+
+	user, err := app.Users.GetById(userID)
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// check roles and ownership
+
+	if comment.UserID != userID && user.Role != "moderator" && user.Role != "admin" {
+		app.clientError(w, r, http.StatusForbidden)
 		return
 	}
 

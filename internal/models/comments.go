@@ -31,6 +31,7 @@ type CommentReaction struct {
 	Comment
 	IsLiked    bool
 	IsDisliked bool
+	Username string
 }
 
 type CommentsModel struct {
@@ -182,9 +183,10 @@ func (m *CommentsModel) GetAllByPostId(postId int) ([]*Comment, error) {
 }
 
 func (m *CommentsModel) GetAllCommentsReactionsByPostID(postID int) ([]*CommentReaction, error) {
-	stmt := `SELECT c.id, c.post_id, c.user_id, c.text, c.like_count, c.dislike_count, c.created_at,
+	stmt := `SELECT c.id, c.post_id, c.user_id, u.username,  c.text, c.like_count, c.dislike_count, c.created_at,
                     cr.type as reaction, cr.user_id as reaction_user_id
              FROM Comments c
+			 INNER JOIN Users u ON u.id = c.user_id
              LEFT JOIN Comment_Reactions cr ON cr.comment_id = c.id
              WHERE c.post_id = ?
              ORDER BY c.created_at ASC`
@@ -207,6 +209,7 @@ func (m *CommentsModel) GetAllCommentsReactionsByPostID(postID int) ([]*CommentR
 			&comment.ID,
 			&comment.PostID,
 			&comment.UserID,
+			&comment.Username,
 			&comment.Text,
 			&comment.LikeCount,
 			&comment.DislikeCount,

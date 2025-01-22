@@ -1,0 +1,52 @@
+{{define "title"}}Edit Post #{{.Post.ID}}{{end}}
+
+{{define "main"}}
+<div class="post-edit-wrapper">
+    <h2>Edit Post</h2>
+    <form action="/post/edit/post?id={{.Post.ID}}" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" value="{{.Post.Title}}" required>
+            {{with .FormErrors.title}}
+            <div class="error">{{.}}</div>
+            {{end}}
+        </div>
+
+        <div class="form-group">
+            <label for="category_id">Category:</label>
+            <select id="category_id" name="category_id" required>
+                {{range .Categories}}
+                <option value="{{.ID}}" {{if eq .ID $.Post.CategoryID}}selected{{end}}>{{.Name}}</option>
+                {{end}}
+            </select>
+            {{with .FormErrors.category_id}}
+            <div class="error">{{.}}</div>
+            {{end}}
+        </div>
+
+        <div class="form-group">
+            <label for="content">Content:</label>
+            <textarea id="content" name="content" rows="10" required>{{.Post.Content}}</textarea>
+            {{with .FormErrors.content}}
+            <div class="error">{{.}}</div>
+            {{end}}
+        </div>
+
+        <div class="form-group">
+            <label for="image">Image:</label>
+            {{if .Post.ImgUrl}}
+            <div>
+                <img src="/imgs/{{.Post.ImgUrl}}" alt="Post Image" style="max-width: 200px;" id="image-preview"     
+                >
+            </div>
+            {{end}}
+            <input type="file" id="image" name="image" onchange="document.getElementById('image-preview').src = window.URL.createObjectURL(this.files[0])" >
+            {{with .FormErrors.image}}
+            <div class="error">{{.}}</div>
+            {{end}}
+        </div>
+
+        <button type="submit">Update Post</button>
+    </form>
+</div>
+{{end}}

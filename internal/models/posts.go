@@ -18,6 +18,7 @@ type PostsModelInterface interface {
 	GetFilteredPosts(userID, categoryID, page, pageSize int) ([]*PostByUser, error)
 	CountPosts(categoryID int) (int, error)
 	DeletePostById(id int) error
+	UpdatePost(id int, title, content, imgUrl string, categoryID int) error
 }
 
 type Post struct {
@@ -208,60 +209,6 @@ func (m *PostModel) GetPostsByIDs(postIDs []int) ([]*Post, error) {
 	return posts, nil
 }
 
-// func (m *PostModel) GetFilteredPosts(categoryID, page, pageSize int) ([]*PostByUser, error) {
-// 	if page < 1 {
-// 		page = 1
-// 	}
-// 	offset := (page - 1) * pageSize
-
-// 	// Base query
-// 	query := `
-//         SELECT p.id, p.title, p.content, p.imgUrl, p.createdAt, p.category_id, p.owner_id, p.like_count, p.dislike_count, COUNT(c.id) as comment_count
-//         FROM Posts as p
-// 		INNER JOIN Comments as c ON p.id = c.post_id
-//     `
-// 	var args []interface{}
-// 	var whereClauses []string
-
-// 	// If filtering by category
-// 	if categoryID > 0 {
-// 		whereClauses = append(whereClauses, "category_id = ?")
-// 		args = append(args, categoryID)
-// 	}
-
-// 	// If we have any WHERE clauses, add them
-// 	if len(whereClauses) > 0 {
-// 		query += " WHERE " + strings.Join(whereClauses, " AND ")
-// 	}
-
-// 	query += ` ORDER BY createdAt DESC`
-// 	query += ` LIMIT ? OFFSET ?`
-// 	args = append(args, pageSize, offset)
-
-// 	rows, err := m.DB.Query(query, args...)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
-
-// 	var posts []*PostByUser
-// 	for rows.Next() {
-// 		post := &PostByUser{}
-// 		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.ImgUrl, &post.CreatedAt,
-// 			&post.CategoryID, &post.OwnerID, &post.LikeCount, &post.DislikeCount, &post.CommentCount)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		posts = append(posts, post)
-// 	}
-
-// 	if err = rows.Err(); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return posts, nil
-// }
-
 func (m *PostModel) GetFilteredPosts(userID int, categoryID, page, pageSize int) ([]*PostByUser, error) {
 	if page < 1 {
 		page = 1
@@ -367,6 +314,45 @@ func (m *PostModel) DeletePostById(id int) error {
 	// Update the post's like/dislike counts in the database
 	stmt := `DELETE FROM Posts WHERE id = ?`
 	_, err := m.DB.Exec(stmt, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PostModel) UpdatePost(id int, title, content, imgUrl string, categoryID int) error {
+	// Initialize the base query and arguments slice
+	query := "UPDATE Posts SET "
+	args := []interface{}{}
+
+	// Dynamically build the query based on non-empty arguments
+	if title != "" {
+		query += "title = ?, "
+		args = append(args, title)
+	}
+	if content != "" {
+		query += "content = ?, "
+		args = append(args, content)
+	}
+	if imgUrl != "" {
+		query += "imgUrl = ?, "
+		args = append(args, imgUrl)
+	}
+	if categoryID != 0 {
+		query += "category_id = ?, "
+		args = append(args, categoryID)
+	}
+
+	// Remove the trailing comma and space
+	query = query[:len(query)-2]
+
+	// Add the WHERE clause
+	query += " WHERE id = ?"
+	args = append(args, id)
+
+	// Execute the query
+	_, err := m.DB.Exec(query, args...)
 	if err != nil {
 		return err
 	}

@@ -2,8 +2,6 @@ Chto ostalos' sdelat':
 1. comments are duplicating when you like your own comment
 2. Advanced Features optional: we have to create an activity page that tracks the user own activity. In other words, a page that :
 <ul>
-    <li>Shows the user created posts</li>
-    <li>Shows where the user left a like or a dislike</li>
     <li>Shows where and what the user has been commenting. For this, the comment will have to be shown, as well as the post commented</li>
     <li>we have to create a section where you will be able to Edit/Remove posts and comments.</li>
 </ul>

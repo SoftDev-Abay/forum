@@ -17,6 +17,8 @@
 <th>Title</th>
 <th>Created</th>
 <th>ID</th>
+<th>Actions</th>
+<th></th>
 </tr>
 {{range .Posts}}
 <tr>
@@ -24,6 +26,13 @@
 <td><a href='/post/view?id={{.ID}}'>{{.Title}}</a></td>
 <td>{{humanDate .CreatedAt}}</td>
 <td>#{{.ID}}</td>
+<td><a href='/post/edit?id={{.ID}}'>Edit</a></td>
+
+<td>
+    <form action="/post/delete?id={{.ID}}" method="post">
+            <input type="submit" value="Delete">
+    </form>
+</td>
 </tr>
 {{end}}
 </table>

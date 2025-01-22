@@ -321,6 +321,9 @@ footer {
     cursor: pointer;
     outline: 0;
     color: #AAA;
+    display: flex;
+    align-items: center;
+    gap: 7px;
     /* border: solid 1px black */
 }
 
@@ -512,6 +515,20 @@ footer {
 	-webkit-border-radius: 4px 4px 0 0;
 	-moz-border-radius: 4px 4px 0 0;
 	border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.comment-box .comment-head .comment-head-info {
+  display: flex;
+  align-items: center;
+}
+
+.comment-box .comment-head .comment-head-controls {
+  display: flex;
+  align-items: center;
+  /* gap: 10px; */
 }
 
 .comment-box .comment-head i {
