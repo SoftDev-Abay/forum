@@ -79,9 +79,6 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, r, err)
 		return
 	}
-
-	fmt.Println(comments)
-
 	// Check if user is authenticated
 	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
@@ -558,8 +555,6 @@ func (app *Application) postEdit(w http.ResponseWriter, r *http.Request) {
 
 func (app *Application) postEditPost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		fmt.Printf("Method: %s\n", r.Method)
-
 		app.clientError(w, r, http.StatusMethodNotAllowed)
 		return
 	}
