@@ -12,6 +12,8 @@ type SessionModelInterface interface {
 	GetLastUserSession(id int) (*Session, error)
 	GetUserIDByToken(token string) (int, error)
 	DeleteByToken(token string) error
+	DeleteByUserId(userId int) error
+	GetByUserId(userId int) (*Session, error)
 }
 
 type Session struct {
@@ -49,6 +51,23 @@ func (m *SessionModel) GetById(id int) (*Session, error) {
 
 	s := &Session{}
 	err := m.DB.QueryRow(stmt, id).Scan(&s.ID, &s.Token, &s.UserID, &s.CreatedAt, &s.ExpiresAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+
+	return s, nil
+}
+
+func (m *SessionModel) GetByUserId(userId int) (*Session, error) {
+	stmt := `SELECT id, token, user_id, createdAt, expiresAt FROM sessions
+	WHERE user_id = ?`
+
+	s := &Session{}
+	err := m.DB.QueryRow(stmt, userId).Scan(&s.ID, &s.Token, &s.UserID, &s.CreatedAt, &s.ExpiresAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -99,6 +118,18 @@ func (m *SessionModel) DeleteByToken(token string) error {
 	stmt := `DELETE FROM Sessions WHERE token = ?`
 
 	_, err := m.DB.Exec(stmt, token)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
+func (m *SessionModel) DeleteByUserId(userId int) error {
+	stmt := `DELETE FROM Sessions WHERE user_id = ?`
+
+	_, err := m.DB.Exec(stmt, userId)
 	if err != nil {
 		return err
 	}

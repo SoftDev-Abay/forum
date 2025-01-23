@@ -98,6 +98,17 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	existingToken, err := app.Session.GetByUserId(user.ID)
+
+	if existingToken != nil {
+		app.Session.DeleteByUserId(user.ID)
+	}
+
+	if errors.Is(err, models.ErrNoRecord) {
+	} else {
+		app.serverError(w, r, err)
+	}
+
 	token, err := GenerateToken()
 	if err != nil {
 		app.serverError(w, r, err)
@@ -172,15 +183,15 @@ func (app *Application) logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenCookie, err := r.Cookie("token")
-	if err != nil || tokenCookie.Value == "" {
+	userId, err := app.getAuthenticatedUserID(r)
+	if err != nil {
+
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
-	token := tokenCookie.Value
+	err = app.Session.DeleteByUserId(userId)
 
-	err = app.Session.DeleteByToken(token)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
