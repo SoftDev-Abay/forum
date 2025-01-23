@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -15,7 +16,7 @@ type CommentsModelInterface interface {
 	DeleteCommentsByPostId(postID int) error
 	GetAllByPostId(postId int) ([]*Comment, error)
 	DeleteCommentById(id int) error
-	GetAllCommentsReactionsByPostID(postID int) ([]*CommentReaction, error)
+	GetAllCommentsReactionsByPostID(postID int, userID int) ([]*CommentReaction, error)
 	GetAllByUserId(userId int) ([]*CommentPostAddition, error)
 }
 
@@ -180,7 +181,7 @@ func (m *CommentsModel) GetAllByPostId(postId int) ([]*Comment, error) {
 	return comments, nil
 }
 
-func (m *CommentsModel) GetAllCommentsReactionsByPostID(postID int) ([]*CommentReaction, error) {
+func (m *CommentsModel) GetAllCommentsReactionsByPostID(postID int, userID int) ([]*CommentReaction, error) {
 	stmt := `SELECT 
 				c.id AS comment_id, 
 				c.post_id, 
@@ -242,11 +243,18 @@ func (m *CommentsModel) GetAllCommentsReactionsByPostID(postID int) ([]*CommentR
 				parts := strings.Split(entry, ":")
 				if len(parts) == 2 {
 					reactionType := parts[0]
+					reactionUserId, err := strconv.Atoi(parts[1])
+					
+					if err != nil {
+						return nil, err
+					}
 
-					if reactionType == "like" {
-						comment.IsLiked = true
-					} else if reactionType == "dislike" {
-						comment.IsDisliked = true
+					if reactionUserId == userID {
+						if reactionType == "like" {
+							comment.IsLiked = true
+						} else if reactionType == "dislike" {
+							comment.IsDisliked = true
+						}
 					}
 				}
 			}

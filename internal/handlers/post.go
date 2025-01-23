@@ -71,7 +71,9 @@ func (app *Application) postView(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	comments, err := app.Comments.GetAllCommentsReactionsByPostID(id)
+	userId, err := app.getAuthenticatedUserID(r)
+
+	comments, err := app.Comments.GetAllCommentsReactionsByPostID(id, userId)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
