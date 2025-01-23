@@ -1,63 +1,91 @@
 {{define "title"}}Post #{{.PostByUser.ID}}{{end}}
 
 {{define "main"}}
+<div id="reportWindow" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeModal">&times;</span>
 
+    <h2>Report Post</h2>
+    <form action="/post/report" method="POST">
+      <input type="hidden" name="post_id" value="{{.PostByUser.ID}}" />
+
+      <label for="report_reason_id">Reason:</label>
+      <select name="report_reason_id" id="report_reason_id">
+        {{range .ReportReasons}}
+        <option value="{{.ID}}">{{.Text}}</option>
+        {{end}}
+      </select>
+      <br><br>
+
+      <label for="description">Description:</label><br>
+      <textarea name="description" rows="3" cols="40" placeholder="Optional extra details..."></textarea>
+      <br><br>
+
+      <button type="submit">Submit Report</button>
+    </form>
+  </div>
+</div>
 
 <div class="post-view-wrapper">
     {{if .PostByUser}}
-    {{with.PostByUser}}
     <div class="post-card post-card-full">
         <div class="card-header">
           <div class="user-data">
             <div class="post-card-NameDate">
-              <p class="post-card-Username">By {{.OwnerName}}</p>
+              <p class="post-card-Username">By {{.PostByUser.OwnerName}}</p>
               <span class="post-card-Date">
-                <time datetime="">{{humanDate .CreatedAt}}</time>
+                <time datetime="">{{humanDate .PostByUser.CreatedAt}}</time>
               </span>
             </div>
           </div>
         </div>
         <div class="content">
           <div class="title">
-            <p class="titleHome">{{.Title}}</p>
+            <p class="titleHome">{{.PostByUser.Title}}</p>
           </div>
-          {{with .ImgUrl}}
+          {{with .PostByUser.ImgUrl}}
             <img src="/imgs/{{.}}" alt="Post Image"/>
           {{end}}
     
           <div class="desc">
-            <div class="postText_short">{{.Content}}</div>
+            <div class="postText_short">{{.PostByUser.Content}}</div>
           </div>
         </div>
         <div class="card-footer">
           <div class="category-tags-wrapper">
-            <p class="category-tag">{{.CategoryName}}</p>
+            <p class="category-tag">{{.PostByUser.CategoryName}}</p>
           </div>
           <div class="reactions-wrapper">
             <div class="reaction-container">
               <i class="fa fa-comment no-color"></i>
-              <p>{{.CommentCount}}</p>
+              <p>{{.PostByUser.CommentCount}}</p>
             </div>
             <div class="reaction-container">
-              <form action="/post/reaction?id={{.ID}}" method="POST">
+              <form action="/post/reaction?id={{.PostByUser.ID}}" method="POST">
                 <button class="reaction-button" type="submit" name="reaction" value="like">
-                  <i class="fa fa-thumbs-up {{if .IsLiked}}green{{else}}no-color{{end}}"></i>
-                  {{.LikeCount}}
+                  <i class="fa fa-thumbs-up {{if .PostByUser.IsLiked}}green{{else}}no-color{{end}}"></i>
+                  {{.PostByUser.LikeCount}}
                 </button>
               </form>
             </div>
             <div class="reaction-container">
-              <form action="/post/reaction?id={{.ID}}" method="POST">
+              <form action="/post/reaction?id={{.PostByUser.ID}}" method="POST">
                 <button class="reaction-button" type="submit" name="reaction" value="dislike">
-                  <i class="fa fa-thumbs-down {{if .IsDisliked}}red{{else}}no-color{{end}}"></i>
-                  {{.DislikeCount}}
+                  <i class="fa fa-thumbs-down {{if .PostByUser.IsDisliked}}red{{else}}no-color{{end}}"></i>
+                  {{.PostByUser.DislikeCount}}
                 </button>
               </form>
+              {{if .User}}
+                {{if or (eq .User.Role "moderator") (eq .User.Role "admin")}}
+                <button id="openReportModal" class="report-btn">
+                  Report Post
+                </button>
+                {{end}}
+              {{end}}
             </div>
           </div>
         </div>
     </div>
-    {{end}}
     
     
     <!-- Comments Input -->
@@ -129,31 +157,6 @@
         
     {{end}}
     
-    <!-- Report logic -->
-    {{if .User}}
-      {{if eq .User.Role "moderator"}}
-      <form action="/post/report" method="POST" style="margin-top:1rem;">
-          <input type="hidden" name="post_id" value="{{.PostByUser.ID}}" />
-    
-          <label for="report_reason_id">Reason:</label>
-          <select name="report_reason_id" id="report_reason_id">
-              {{range .ReportReasons}}
-              <option value="{{.ID}}">{{.Text}}</option>
-              {{end}}
-          </select>
-          <br><br>
-    
-          <label for="description">Description:</label><br>
-          <textarea name="description" rows="3" cols="40" placeholder="Optional extra details..."></textarea>
-          <br><br>
-    
-          <input type="submit" value="Report Post">
-      </form>
-      <br>
-      <br>
-      {{end}}
-    {{end}}
-    
     
     <!-- Admin Controls Logic -->
     {{if .User}}
@@ -168,5 +171,8 @@
     
     
     {{end}}
+
+    
+
 </div>
 

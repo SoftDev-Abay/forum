@@ -868,3 +868,43 @@ footer {
   flex-direction: column;
   gap: 20px;
 }
+
+
+/* The Modal (background) */
+.modal {
+  display: none;            /* Hidden by default */
+  position: fixed;          /* Stay in place */
+  z-index: 9999;            /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%;              /* Full width */
+  height: 100%;             /* Full height */
+  overflow: auto;           /* Enable scroll if needed */
+  background-color: rgba(0, 0, 0, 0.5); /* black w/ opacity */
+}
+
+/* Modal Content box */
+.modal-content {
+  background-color: #f4f4f4;
+  margin: 10% auto; /* 10% from top, auto center */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 400px;     /* Could adjust as needed */
+  border-radius: 5px;
+  position: relative;
+}
+
+/* Close (X) button */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+  color: #333;
+  text-decoration: none;
+}
