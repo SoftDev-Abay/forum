@@ -126,20 +126,16 @@ func isAllowedImageExt(filename string) bool {
 }
 
 func generateUniqueFileName(originalFilename string) (string, error) {
-	// Get file extension
 	ext := strings.ToLower(filepath.Ext(originalFilename))
 
-	// Create a UUIDv4
 	u, err := uuid.NewV4()
 	if err != nil {
 		return "", err
 	}
 
-	// Return <UUID> + extension, e.g., "6ec29...-4ea2-86b1-...ab.png"
 	return u.String() + ext, nil
 }
 
-// Helper function to check if a role exists in a slice
 func contains(roles []string, role string) bool {
 	for _, r := range roles {
 		if r == role {

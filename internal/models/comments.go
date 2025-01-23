@@ -111,7 +111,6 @@ func (m *CommentsModel) GetAllByPostIdAndUserId(userId int, postId int) ([]*Comm
 			return nil, err
 		}
 
-		// Check if the reaction is valid before switching
 		if reaction.Valid {
 			switch reaction.String {
 			case "like":
@@ -125,7 +124,7 @@ func (m *CommentsModel) GetAllByPostIdAndUserId(userId int, postId int) ([]*Comm
 				comment.IsLiked = false
 			}
 		} else {
-			// If the reaction is null, set both to false
+
 			comment.IsDisliked = false
 			comment.IsLiked = false
 		}
@@ -140,9 +139,7 @@ func (m *CommentsModel) GetAllByPostIdAndUserId(userId int, postId int) ([]*Comm
 	return comments, nil
 }
 
-// updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
 func (m *CommentsModel) UpdateCommentLikeDislikeCounts(commentID int, likeCount int, dislikeCount int) error {
-	// Update the post's like/dislike counts in the database
 	stmt := `UPDATE Comments SET like_count = ?, dislike_count = ? WHERE id = ?`
 	_, err := m.DB.Exec(stmt, likeCount, dislikeCount, commentID)
 	if err != nil {
@@ -151,14 +148,6 @@ func (m *CommentsModel) UpdateCommentLikeDislikeCounts(commentID int, likeCount 
 
 	return nil
 }
-
-// so I need to write a query that will identify get whether a comment was liked or not
-// find a comment reaction
-// exists:
-// 1) is liked
-// 2) is disliked
-// doesnt exist:
-// 1) is null
 
 func (m *CommentsModel) GetAllByPostId(postId int) ([]*Comment, error) {
 	stmt := `SELECT c.id, c.post_id, c.user_id, c.text, c.like_count, c.dislike_count, c.created_at
@@ -244,7 +233,6 @@ func (m *CommentsModel) GetAllCommentsReactionsByPostID(postID int) ([]*CommentR
 			return nil, err
 		}
 
-		// Process reactions to initialize IsLiked and IsDisliked
 		comment.IsLiked = false
 		comment.IsDisliked = false
 
@@ -254,7 +242,7 @@ func (m *CommentsModel) GetAllCommentsReactionsByPostID(postID int) ([]*CommentR
 				parts := strings.Split(entry, ":")
 				if len(parts) == 2 {
 					reactionType := parts[0]
-					// Update IsLiked or IsDisliked based on reaction type
+
 					if reactionType == "like" {
 						comment.IsLiked = true
 					} else if reactionType == "dislike" {
@@ -274,9 +262,7 @@ func (m *CommentsModel) GetAllCommentsReactionsByPostID(postID int) ([]*CommentR
 	return commentReactions, nil
 }
 
-// updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
 func (m *CommentsModel) DeleteCommentsByPostId(postID int) error {
-	// Update the post's like/dislike counts in the database
 	stmt := `DELETE FROM Comments WHERE post_id = ?`
 	_, err := m.DB.Exec(stmt, postID)
 	if err != nil {
@@ -286,9 +272,7 @@ func (m *CommentsModel) DeleteCommentsByPostId(postID int) error {
 	return nil
 }
 
-// updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
 func (m *CommentsModel) DeleteCommentById(id int) error {
-	// Update the post's like/dislike counts in the database
 	stmt := `DELETE FROM Comments WHERE id = ?`
 	_, err := m.DB.Exec(stmt, id)
 	if err != nil {
@@ -298,7 +282,6 @@ func (m *CommentsModel) DeleteCommentById(id int) error {
 	return nil
 }
 
-// a function that will get all comments by userid
 func (m *CommentsModel) GetAllByUserId(userId int) ([]*CommentPostAddition, error) {
 	stmt := `SELECT c.id, c.post_id, c.user_id, c.text, c.like_count, c.dislike_count, c.created_at, p.title
 			FROM Comments c

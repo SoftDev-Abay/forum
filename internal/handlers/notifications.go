@@ -4,21 +4,18 @@ import (
 	"net/http"
 )
 
-// notificationsPage shows all notifications for the current user.
 func (app *Application) notificationsPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		app.clientError(w, r, http.StatusMethodNotAllowed)
 		return
 	}
 
-	// 1) Get the currently logged-in user
 	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
 		app.notAuthenticated(w, r)
 		return
 	}
 
-	// 2) Fetch all notifications for this user
 	notifs, err := app.Notifications.GetAllByRecipient(userID)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -28,7 +25,6 @@ func (app *Application) notificationsPage(w http.ResponseWriter, r *http.Request
 	var notificationViews []NotificationView
 
 	for _, n := range notifs {
-		// Fetch the actor's username
 		actorUser, err := app.Users.GetById(n.Actor_ID)
 		var actorName string
 		if err == nil && actorUser != nil {
@@ -37,7 +33,6 @@ func (app *Application) notificationsPage(w http.ResponseWriter, r *http.Request
 			actorName = "UnknownUser"
 		}
 
-		// If comment_id is set, fetch the comment to get its text
 		var commentText string
 		if n.Comment_ID.Valid {
 			commentID := int(n.Comment_ID.Int64)
@@ -58,17 +53,14 @@ func (app *Application) notificationsPage(w http.ResponseWriter, r *http.Request
 		})
 	}
 
-	// 4) Mark them all as read in one go (or individually).
 	err = app.Notifications.MarkAllAsReadByUser(userID)
 	if err != nil {
-		// If this fails, we won't block displaying them
+		app.Logger.Warn(err.Error())
 	}
 
-	// 5) Prepare template data
 	data := templateData{
-		UserNotifications: notificationViews, // We'll store in .Notifications
+		UserNotifications: notificationViews, 
 	}
 
-	// 6) Render
 	app.render(w, r, http.StatusOK, "notifications.html", data)
 }

@@ -1,11 +1,8 @@
 {{define "title"}}Users Control Panel{{end}}
 {{define "main"}}
 <h2>Users</h2>
-<!-- List of All users -->
 {{if .Users}}
 <table>
-	<!-- stmt := `SELECT id, email, username, password, enabled, &u.Role FROM users` -->
-
     <tr>
         <th>ID</th>
         <th>Email</th>
@@ -22,7 +19,6 @@
         <td>{{.Username}}</td>
         <td>{{.Enabled}}</td>
         <td>{{.Role}}</td>
-        <!-- here I want to add two buttons, demote and promote -->
          
         <td>
             {{if eq .Role "user"}}

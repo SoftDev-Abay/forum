@@ -20,7 +20,6 @@ func (app *Application) Routes() http.Handler {
 
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
 
-	// Serve /imgs/<filename> from ./data/imgs
 	mux.Handle("/imgs/", http.StripPrefix("/imgs/", http.FileServer(http.Dir("./data/imgs"))))
 
 	mux.HandleFunc("/", app.home)
@@ -73,8 +72,6 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("/admin/categories/create", app.loginMiddware(http.HandlerFunc(app.categoryCreate), "admin"))
 	mux.Handle("/admin/categories/create/post", app.loginMiddware(http.HandlerFunc(app.categoryCreatePost), "admin"))
 	mux.Handle("/admin/categories/delete", app.loginMiddware(http.HandlerFunc(app.DeleteCategory), "admin"))
-
-	// Notifications
 
 	return app.rateLimitMiddleware(app.secureHeaders(mux))
 }

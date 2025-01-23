@@ -2,7 +2,6 @@
 {{define "main"}}
 <h2>Latest Posts</h2>
 
-<!-- Optional: Category filter -->
 <form action="/" method="GET" style="margin-bottom: 1rem;">
   <label for="category">Category:</label>
   <select name="category" id="category" onchange="this.form.submit()">
@@ -12,7 +11,6 @@
     {{end}}
   </select>
 
-  <!-- Page Size -->
   <label for="pageSize">Posts per page:</label>
   <select name="pageSize" id="pageSize" onchange="this.form.submit()">
     <option value="5" {{if eq $.PageSize 5}}selected{{end}}>5</option>
@@ -21,13 +19,11 @@
     <option value="50" {{if eq $.PageSize 50}}selected{{end}}>50</option>
   </select>
 
-  <!-- Keep the current page -->
   <input type="hidden" name="page" value="{{.CurrentPage}}" />
 
   <noscript><button type="submit">Filter</button></noscript>
 </form>
 
-<!-- Posts -->
 <div class="posts-container">
   {{with .PostsByUser}} 
     {{range .}}
@@ -84,20 +80,16 @@
   {{end}}
 </div>
 
-<!-- Pagination -->
 <div class="pagination" style="margin-top: 1rem;">
-  <!-- Prev Link -->
   {{if gt .CurrentPage 1}}
   <a href="/?page={{sub .CurrentPage 1}}&category={{.CurrentCatID}}&pageSize={{.PageSize}}">Prev</a>
   {{end}}
 
-  <!-- Page Links -->
   {{range .VisiblePages}}
   <a href="/?page={{.}}&category={{$.CurrentCatID}}&pageSize={{$.PageSize}}" 
      {{if eq . $.CurrentPage}}class="active"{{end}}>{{.}}</a>
   {{end}}
 
-  <!-- Next Link -->
   {{if lt .CurrentPage .TotalPages}}
   <a href="/?page={{add .CurrentPage 1}}&category={{.CurrentCatID}}&pageSize={{.PageSize}}">Next</a>
   {{end}}

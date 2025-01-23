@@ -28,11 +28,9 @@
         <td>{{.Description}}</td>
         <td>{{humanDate .DateCreated}}</td>
         <td>
-            <!-- 1) Delete Post (and the report) -->
             <form action="/admin/report/delete-post?id={{.ID}}" method="POST" style="display:inline;">
                 <input type="submit" value="Delete Post">
             </form>
-            <!-- 2) Reject the report (keep the post) -->
             <form action="/admin/report/reject?id={{.ID}}" method="POST" style="display:inline;">
                 <input type="submit" value="Reject Report">
             </form>

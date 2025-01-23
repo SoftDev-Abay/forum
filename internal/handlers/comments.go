@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-	// "game-forum-abaliyev-ashirbay/internal/models"
 )
 
 func (app *Application) createCommentPost(w http.ResponseWriter, r *http.Request) {
@@ -41,13 +40,8 @@ func (app *Application) createCommentPost(w http.ResponseWriter, r *http.Request
 		app.serverError(w, r, err)
 		return
 	}
-
-	// 1) Notify the post owner (except if the commenter is the same user).
 	post, err := app.Posts.Get(postId)
 	if err == nil && post.OwnerID != userId {
-		// Insert a new notification of type "comment".
-		// The actor is userId, the recipient is post.OwnerID,
-		// the post is postId, and the new comment's ID is 'commentID'.
 		_, nErr := app.Notifications.Insert(
 			"comment",
 			userId,       // actor
@@ -61,7 +55,6 @@ func (app *Application) createCommentPost(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	// Redirect to the post view page
 	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", postId), http.StatusSeeOther)
 }
 
@@ -70,7 +63,6 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 		app.clientError(w, r, http.StatusMethodNotAllowed)
 		return
 	}
-	// Get the comment ID from the query parameters
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, r, http.StatusBadRequest)
@@ -90,28 +82,23 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Get the reaction type (like or dislike) from the form
 	reaction := r.FormValue("reaction")
 	if reaction != "like" && reaction != "dislike" {
 		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
-	// Get the user ID from the session or context
 	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
-		// If not authenticated, return an error or handle gracefully
 		app.notAuthenticated(w, r)
 		return
 	}
 
-	// Check current user reaction to decide if they are changing their reaction
 	existingReaction, err := app.CommentsReactions.GetReaction(userID, commentID)
 	if err != nil && err != models.ErrNoReaction {
 		app.serverError(w, r, err)
 		return
 	}
 
-	// Fetch the comment
 	comment, err := app.Comments.Get(commentID)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
@@ -122,14 +109,11 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Initialize like and dislike counts
 	newLikeCount := comment.LikeCount
 	newDislikeCount := comment.DislikeCount
 
 	if existingReaction != nil {
-		// User already reacted, handle toggling reactions
 		if existingReaction.Type == reaction {
-			// If they click on the same reaction, it will be removed (toggle)
 			err = app.CommentsReactions.DeleteReaction(userID, commentID)
 			if err != nil {
 				app.serverError(w, r, err)
@@ -143,7 +127,6 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 			}
 
 		} else {
-			// If they switch reactions, update accordingly
 			err = app.CommentsReactions.UpdateReaction(userID, commentID, reaction)
 			if err != nil {
 				app.serverError(w, r, err)
@@ -157,9 +140,29 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 				newLikeCount -= 1
 				newDislikeCount += 1
 			}
+
+
+			var notifType string
+			if reaction == "like" {
+				notifType = "comment_like"
+			} else {
+				notifType = "comment_dislike"
+			}
+	
+			_, nErr := app.Notifications.Insert(
+				notifType,
+				userID,         // actor
+				comment.UserID, // recipient
+				comment.PostID, // post
+				&comment.ID,    // comment
+			)
+			if nErr != nil {
+				app.serverError(w, r, nErr)
+				return
+			}
+
 		}
 	} else {
-		// No existing reaction, so we add the new one
 		err = app.CommentsReactions.AddReaction(userID, commentID, reaction)
 		if err != nil {
 			app.serverError(w, r, err)
@@ -171,15 +174,7 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 		} else {
 			newDislikeCount += 1
 		}
-	}
 
-	// Update the like and dislike counts on the comment
-	err = app.Comments.UpdateCommentLikeDislikeCounts(commentID, newLikeCount, newDislikeCount)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	if comment.UserID != userID {
 		var notifType string
 		if reaction == "like" {
 			notifType = "comment_like"
@@ -200,19 +195,25 @@ func (app *Application) handleCommentReaction(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	// After updating, redirect to the comment view to update the UI
+	err = app.Comments.UpdateCommentLikeDislikeCounts(commentID, newLikeCount, newDislikeCount)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	// if comment.UserID != userID && existingReaction != nil && existingReaction.Type == reaction {
+
+	// }
+
 	redirectURL := fmt.Sprintf("/post/view?id=%d", postId)
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 
 func (app *Application) commentDelete(w http.ResponseWriter, r *http.Request) {
-	// Only allow POST (or possibly DELETE, if you are using REST conventions).
 	if r.Method != http.MethodPost {
 		app.clientError(w, r, http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Parse the `id` from the query parameters (e.g. /post/delete?id=123).
 	idStr := r.URL.Query().Get("id")
 	commentID, err := strconv.Atoi(idStr)
 	if err != nil || commentID < 1 {
@@ -220,14 +221,12 @@ func (app *Application) commentDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// (Optional) Check if the user is authenticated and/or is allowed to delete the post.
 	userID, err := app.getAuthenticatedUserID(r)
 	if err != nil {
 		app.notAuthenticated(w, r)
 		return
 	}
 
-	// Retrieve the post to get the image URL
 	comment, err := app.Comments.Get(commentID)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
@@ -239,13 +238,10 @@ func (app *Application) commentDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := app.Users.GetById(userID)
-
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
-	// check roles and ownership
 
 	if comment.UserID != userID && user.Role != "moderator" && user.Role != "admin" {
 		app.clientError(w, r, http.StatusForbidden)
@@ -264,6 +260,5 @@ func (app *Application) commentDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Redirect to the post view page
 	http.Redirect(w, r, fmt.Sprintf("/post/view?id=%d", comment.PostID), http.StatusSeeOther)
 }

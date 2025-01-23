@@ -79,24 +79,20 @@ func (app *Application) registerPost(w http.ResponseWriter, r *http.Request) {
 
 	_, err = app.Users.Insert(form.Email, form.Username, hashedPassword, false)
 	if err != nil {
-		// Handle specific errors for duplicate email or username
 		if err == models.ErrDuplicateEmail {
 			v.AddFieldError("email", "Email is already in use")
 		} else if err == models.ErrDuplicateUsername {
 			v.AddFieldError("username", "Username is already taken")
 		} else {
-			// If the error is unexpected, handle it with a server error
 			app.serverError(w, r, err)
 			return
 		}
 
-		// Prepare the template data with form and errors
 		data := templateData{
 			Form:       form,
 			FormErrors: v.FieldErrors,
 		}
 
-		// Render the form with errors
 		app.render(w, r, http.StatusUnprocessableEntity, "register.html", data)
 		return
 	}

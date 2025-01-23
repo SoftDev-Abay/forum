@@ -88,25 +88,21 @@
     </div>
     
     
-    <!-- Comments Input -->
     <form action="/comments/create" class="comment-input-container"  method="post">
         <input type="hidden" name="postId" value="{{.PostByUser.ID}}">
         <textarea placeholder="Add commnet"  class="textarea-add-comment" id="content" name="text" rows="5" cols="80" required></textarea>
         <button class="comment-add-button" type="submit" value="Add">Comment</button>
     </form>
     
-    <!-- Comments section -->
     
     <div class="comments-container">
         <ul id="comments-list" class="comments-list">
             {{range .Comments}}
             <li>
                 <div class="comment-main-level">
-                    <!-- Avatar -->
                     <div class="comment-avatar">
                         <img src="/static/img/abay.jpeg" alt="User Avatar">
                     </div>
-                    <!-- Comment Content -->
                     <div class="comment-box">
                         <div class="comment-head">
                             <div class="comment-head-info">
@@ -158,7 +154,6 @@
     {{end}}
     
     
-    <!-- Admin Controls Logic -->
     {{if .User}}
     {{if or (eq .User.Role "admin") (eq .User.Role "moderator")}}
 

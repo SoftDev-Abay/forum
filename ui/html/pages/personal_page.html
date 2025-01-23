@@ -16,7 +16,7 @@
 
 <div class="personal-page-section">
     <h2>My Posts</h2>
-{{if .Posts}}  <!-- Start condition for posts -->
+{{if .Posts}}  
 <table>
 <tr>
 <th>Title</th>
@@ -27,7 +27,7 @@
 </tr>
 {{range .Posts}}
 <tr>
-<!-- Use the new clean URL style-->
+
 <td><a href='/post/view?id={{.ID}}'>{{.Title}}</a></td>
 <td>{{humanDate .CreatedAt}}</td>
 <td>#{{.ID}}</td>
@@ -41,12 +41,12 @@
 </tr>
 {{end}}
 </table>
-{{end}}  <!-- End condition for posts -->
+{{end}}  
 
 </div>
 <div class="personal-page-section">
 <h2>Liked Posts</h2>
-{{if .LikedPosts}}  <!-- Assuming LikedPosts is a separate field from Posts -->
+{{if .LikedPosts}}  
 <table>
 <tr>
 <th>Title</th>
@@ -55,21 +55,21 @@
 </tr>
 {{range .LikedPosts}}
 <tr>
-<!-- Use the new clean URL style-->
+
 <td><a href='/post/view?id={{.ID}}'>{{.Title}}</a></td>
 <td>{{humanDate .CreatedAt}}</td>
 <td>#{{.ID}}</td>
 </tr>
 {{end}}
 </table>
-{{end}}  <!-- End condition for liked posts -->
+{{end}}  
 
 </div>
 <div class="personal-page-section">
 
 <h2>Your comments</h2>
 
-{{if .CommentPostAddition}}  <!-- Start condition for comments -->
+{{if .CommentPostAddition}}  
 <table>
 <tr>
 <th>Post Title</th>
@@ -86,7 +86,7 @@
 </tr>
 {{end}}
 </table>
-{{end}}  <!-- End condition for comments -->
+{{end}}  
 
 </div>
 
@@ -98,4 +98,4 @@
     
 </div>
 
-{{end}}  <!-- End main block -->
+{{end}}  

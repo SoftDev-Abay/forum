@@ -27,8 +27,8 @@ func main() {
 
 	err := loadEnvFile(".env")
 	if err != nil {
-		logger.Warn("could not load .env file: %v\n", err)
-		// continue because not required.
+		logger.Error("could not load .env file: %v\n", err)
+		os.Exit(1)
 	}
 
 	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
@@ -98,7 +98,6 @@ func main() {
 
 	logger.Info("Starting server", "addr", srv.Addr)
 
-	// Обработка сигналов системы для корректного завершения к бд
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 

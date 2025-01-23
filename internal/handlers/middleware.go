@@ -26,7 +26,6 @@ var (
 )
 
 func (app *Application) loginMiddware(next http.Handler, roles ...string) http.Handler {
-	// If no roles are passed, use the default roles
 	if len(roles) == 0 {
 		roles = defaultRoles
 	}

@@ -52,7 +52,7 @@ type PostByUser struct {
 
 type PostModel struct {
 	DB                 *sql.DB
-	PostReactionsModel *PostReactionsModel // Inject PostReactionsModel into PostModel
+	PostReactionsModel *PostReactionsModel 
 }
 
 func (m *PostModel) Insert(title string, content string, imgUrl string, createdAt time.Time, categoryID int, ownerID int) (int, error) {
@@ -123,9 +123,7 @@ func (m *PostModel) Latest() ([]*Post, error) {
 	return posts, nil
 }
 
-// updatePostLikeDislikeCounts recalculates the like/dislike counts for a post
 func (m *PostModel) UpdatePostLikeDislikeCounts(postID int, likeCount int, dislikeCount int) error {
-	// Update the post's like/dislike counts in the database
 	stmt := `UPDATE Posts SET like_count = ?, dislike_count = ? WHERE id = ?`
 	_, err := m.DB.Exec(stmt, likeCount, dislikeCount, postID)
 	if err != nil {
@@ -167,11 +165,9 @@ func (m *PostModel) GetPostsByUserID(userID int) ([]*Post, error) {
 
 func (m *PostModel) GetPostsByIDs(postIDs []int) ([]*Post, error) {
 	if len(postIDs) == 0 {
-		// No liked post IDs, just return empty slice.
 		return []*Post{}, nil
 	}
 
-	// Build dynamic placeholders like (?, ?, ?) for the SQL IN clause.
 	placeholders := make([]string, len(postIDs))
 	args := make([]interface{}, len(postIDs))
 	for i, id := range postIDs {
@@ -215,7 +211,6 @@ func (m *PostModel) GetFilteredPosts(userID int, categoryID, page, pageSize int)
 	}
 	offset := (page - 1) * pageSize
 
-	// Base query
 	query := `
 		SELECT p.id, p.title, p.content, p.imgUrl, p.createdAt, p.category_id, cat.name as category_name, u.id AS owner_id, u.username AS owner_name,
 			   p.like_count, p.dislike_count, 
@@ -230,21 +225,18 @@ func (m *PostModel) GetFilteredPosts(userID int, categoryID, page, pageSize int)
 	`
 
 	var args []interface{}
-	args = append(args, userID, userID, userID) // For `is_liked` and `is_disliked` when `userID > 0`
+	args = append(args, userID, userID, userID) 
 	var whereClauses []string
 
-	// Filtering by category if provided
 	if categoryID > 0 {
 		whereClauses = append(whereClauses, "p.category_id = ?")
 		args = append(args, categoryID)
 	}
 
-	// Append WHERE clause if any conditions exist
 	if len(whereClauses) > 0 {
 		query += " WHERE " + strings.Join(whereClauses, " AND ")
 	}
 
-	// Add grouping, ordering, and pagination
 	query += `
 		GROUP BY p.id, p.title, p.content, p.imgUrl, p.createdAt, p.category_id, 
 		         p.owner_id, p.like_count, p.dislike_count
@@ -253,14 +245,12 @@ func (m *PostModel) GetFilteredPosts(userID int, categoryID, page, pageSize int)
 	`
 	args = append(args, pageSize, offset)
 
-	// Execute the query
 	rows, err := m.DB.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	// Parse results
 	var posts []*PostByUser
 	for rows.Next() {
 		post := &PostByUser{}
@@ -277,7 +267,6 @@ func (m *PostModel) GetFilteredPosts(userID int, categoryID, page, pageSize int)
 		posts = append(posts, post)
 	}
 
-	// Check for errors during row iteration
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
@@ -290,13 +279,11 @@ func (m *PostModel) CountPosts(categoryID int) (int, error) {
 	var args []interface{}
 	var whereClauses []string
 
-	// If filtering by category
 	if categoryID > 0 {
 		whereClauses = append(whereClauses, "category_id = ?")
 		args = append(args, categoryID)
 	}
 
-	// If we have any WHERE clauses, add them
 	if len(whereClauses) > 0 {
 		query += " WHERE " + strings.Join(whereClauses, " AND ")
 	}
@@ -311,7 +298,6 @@ func (m *PostModel) CountPosts(categoryID int) (int, error) {
 }
 
 func (m *PostModel) DeletePostById(id int) error {
-	// Update the post's like/dislike counts in the database
 	stmt := `DELETE FROM Posts WHERE id = ?`
 	_, err := m.DB.Exec(stmt, id)
 	if err != nil {
@@ -322,11 +308,9 @@ func (m *PostModel) DeletePostById(id int) error {
 }
 
 func (m *PostModel) UpdatePost(id int, title, content, imgUrl string, categoryID int) error {
-	// Initialize the base query and arguments slice
 	query := "UPDATE Posts SET "
 	args := []interface{}{}
 
-	// Dynamically build the query based on non-empty arguments
 	if title != "" {
 		query += "title = ?, "
 		args = append(args, title)
@@ -344,14 +328,11 @@ func (m *PostModel) UpdatePost(id int, title, content, imgUrl string, categoryID
 		args = append(args, categoryID)
 	}
 
-	// Remove the trailing comma and space
 	query = query[:len(query)-2]
 
-	// Add the WHERE clause
 	query += " WHERE id = ?"
 	args = append(args, id)
 
-	// Execute the query
 	_, err := m.DB.Exec(query, args...)
 	if err != nil {
 		return err

@@ -11,7 +11,6 @@ type CategoryForm struct {
 }
 
 // delete a category
-
 func (app *Application) DeleteCategory(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		app.clientError(w, r, http.StatusMethodNotAllowed)
@@ -41,7 +40,6 @@ func (app *Application) DeleteCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 // create a category
-
 func (app *Application) categoryCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		app.clientError(w, r, http.StatusMethodNotAllowed)

@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-// Helper function: exchange code for token
 type GoogleTokenResponse struct {
 	AccessToken string `json:"access_token"`
 	ExpiresIn   int    `json:"expires_in"`
@@ -52,12 +51,10 @@ func exchangeGoogleCodeForToken(clientID, clientSecret, code string) (*GoogleTok
 	return &tokenResp, nil
 }
 
-// Helper function: get Google user info
 type GoogleUser struct {
 	Email string `json:"email"`
 	Name  string `json:"name"`
 	Sub   string `json:"sub"`
-	// Possibly more fields
 }
 
 func getGoogleUserInfo(accessToken string) (*GoogleUser, error) {

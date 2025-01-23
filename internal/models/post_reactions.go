@@ -24,32 +24,27 @@ type PostReactionModelInterface interface {
 type PostReaction struct {
 	UserID int
 	PostID int
-	Type   string // 'like' or 'dislike'
+	Type   string
 }
 
 type PostReactionsModel struct {
 	DB *sql.DB
 }
 
-// AddReaction adds a new reaction (like or dislike) for a user on a post
 func (m *PostReactionsModel) AddReaction(userID int, postID int, reactionType string) error {
-	// Ensure valid reaction type
 	if reactionType != "like" && reactionType != "dislike" {
 		return errors.New("invalid reaction type")
 	}
 
-	// Check if the user has already reacted to this post
 	existingReaction, err := m.GetReaction(userID, postID)
 	if err != nil && err != ErrNoReaction {
 		return err
 	}
 
-	// If a reaction exists, return error (because they should not be adding another reaction)
 	if existingReaction != nil {
-		return ErrReactionAlreadyExists // user already reacted to this post
+		return ErrReactionAlreadyExists
 	}
 
-	// Insert the new reaction
 	stmt := `INSERT INTO Post_Reactions (user_id, post_id, type) VALUES (?, ?, ?)`
 	_, err = m.DB.Exec(stmt, userID, postID, reactionType)
 	if err != nil {
@@ -60,12 +55,10 @@ func (m *PostReactionsModel) AddReaction(userID int, postID int, reactionType st
 }
 
 func (m *PostReactionsModel) UpdateReaction(userID int, postID int, reactionType string) error {
-	// Ensure valid reaction type
 	if reactionType != "like" && reactionType != "dislike" {
 		return errors.New("invalid reaction type")
 	}
 
-	// Check if the user has already reacted to this post
 	_, err := m.GetReaction(userID, postID)
 	if err != nil {
 		if err == ErrNoReaction {
@@ -74,7 +67,6 @@ func (m *PostReactionsModel) UpdateReaction(userID int, postID int, reactionType
 		return err
 	}
 
-	// Update the reaction if it exists
 	stmt := `UPDATE Post_Reactions SET type = ? WHERE user_id = ? AND post_id = ?`
 	_, err = m.DB.Exec(stmt, reactionType, userID, postID)
 	if err != nil {
@@ -84,7 +76,6 @@ func (m *PostReactionsModel) UpdateReaction(userID int, postID int, reactionType
 	return nil
 }
 
-// DeleteReaction removes a reaction (like or dislike) from a user on a post
 func (m *PostReactionsModel) DeleteReaction(userID int, postID int) error {
 	stmt := `DELETE FROM Post_Reactions WHERE user_id = ? AND post_id = ?`
 	_, err := m.DB.Exec(stmt, userID, postID)
@@ -94,7 +85,6 @@ func (m *PostReactionsModel) DeleteReaction(userID int, postID int) error {
 	return nil
 }
 
-// GetReaction retrieves the reaction of a user on a specific post
 func (m *PostReactionsModel) GetReaction(userID int, postID int) (*PostReaction, error) {
 	stmt := `SELECT type FROM Post_Reactions WHERE user_id = ? AND post_id = ?`
 	row := m.DB.QueryRow(stmt, userID, postID)
@@ -134,7 +124,6 @@ func (m *PostReactionsModel) GetReactionByUserID(userID int) (*PostReaction, err
 	}, nil
 }
 
-// GetReactionCount gets the count of reactions (like or dislike) for a post
 func (m *PostReactionsModel) GetReactionCount(postID int, reactionType string) (int, error) {
 	stmt := `SELECT COUNT(*) FROM Post_Reactions WHERE post_id = ? AND type = ?`
 	var count int
@@ -168,7 +157,6 @@ func (m *PostReactionsModel) GetLikedPostIDsByUserID(userID int) ([]int, error) 
 	return postIDs, nil
 }
 
-// DeleteReaction removes a reaction (like or dislike) from a user on a post
 func (m *PostReactionsModel) DeleteReactionsByPostId(postID int) error {
 	stmt := `DELETE FROM Post_Reactions WHERE  post_id = ?`
 	_, err := m.DB.Exec(stmt, postID)

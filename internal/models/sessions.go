@@ -4,15 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"time"
-	// ""
 )
-
-// id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-// token TEXT NOT NULL UNIQUE,
-// user_id INTEGER NOT NULL UNIQUE,
-// createdAt DATETIME NOT NULL,
-// expiresAt DATETIME NOT NULL,
-// FOREIGN KEY (user_id) REFERENCES Users(id)
 
 type SessionModelInterface interface {
 	GetById(id int) (*Session, error)
@@ -30,40 +22,24 @@ type Session struct {
 	ExpiresAt time.Time
 }
 
-// Define a UserModel type which wraps a sql.DB connection pool.
 type SessionModel struct {
 	DB *sql.DB
 }
 
 func (m *SessionModel) Insert(token string, userId int) (int, error) {
-	// Write the SQL statement we want to execute. I've split it over two lines
-	// for readability (which is why it's surrounded with backquotes instead
-	// of normal double quotes).
-
 	stmt := `INSERT INTO sessions (token, user_id, createdAt, expiresAt)
 	VALUES(?, ?, datetime('now'), datetime('now',  '1 days'))`
-	// Use the Exec() method on the embedded connection pool to execute the
-	// statement. The first parameter is the SQL statement, followed by the
-	// title, content and expiry values for the placeholder parameters. This
-	// method returns a sql.Result type, which contains some basic
-	// information about what happened when the statement was executed.
 
-	result, err := m.DB.Exec(stmt, token, userId) // db.Exec is first creating a prepared statement
-	// which is bascially sql query compiled but without paramentrs,
-	//  this way parameters are treared as pure data, thus they cant change the intent of the request
-	// this is better than just putting paraments into the sql string
+	result, err := m.DB.Exec(stmt, token, userId)
 	if err != nil {
 		return 0, err
 	}
 
-	// Use the LastInsertId() method on the result to get the ID of our
-	// newly inserted record in the users table.
 	id, err := result.LastInsertId()
 	if err != nil {
 		return 0, err
 	}
-	// The ID returned has the type int64, so we convert it to an int type
-	// before returning.
+
 	return int(id), nil
 }
 

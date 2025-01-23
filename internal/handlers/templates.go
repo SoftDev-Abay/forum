@@ -33,7 +33,7 @@ type templateData struct {
 	PostsByUser         []*models.PostByUser
 	PostByUser          *models.PostByUser
 	ReportReasons       []*models.ReportReasons
-	Reports             []*models.Reports // or whatever your struct name is
+	Reports             []*models.Reports 
 	CommentPostAddition []*models.CommentPostAddition
 
 	// ERROR FIELDS:

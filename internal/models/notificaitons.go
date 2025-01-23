@@ -5,19 +5,17 @@ import (
 	"time"
 )
 
-// Notifications represents a row in the Notifications table.
 type Notifications struct {
 	ID           int
 	Type         string
 	Actor_ID     int
 	Recipient_ID int
 	Post_ID      int
-	Comment_ID   sql.NullInt64 // or *int if you prefer
+	Comment_ID   sql.NullInt64 
 	Created_at   time.Time
 	Is_read      bool
 }
 
-// NotificationsModelInterface defines the methods we'll implement in the model.
 type NotificationsModelInterface interface {
 	Insert(notificationType string, actorID, recipientID, postID int, commentID *int) (int, error)
 	GetAllByRecipient(userID int) ([]*Notifications, error)
@@ -26,13 +24,10 @@ type NotificationsModelInterface interface {
 	MarkAllAsReadByUser(userID int) error
 }
 
-// NotificationsModel implements NotificationsModelInterface.
 type NotificationsModel struct {
 	DB *sql.DB
 }
 
-// Insert creates a new notification row.
-// commentID is optional; if it's nil, we insert NULL in the comment_id column.
 func (m *NotificationsModel) Insert(notificationType string, actorID, recipientID, postID int, commentID *int) (int, error) {
 	stmt := `
         INSERT INTO Notifications 
@@ -42,7 +37,7 @@ func (m *NotificationsModel) Insert(notificationType string, actorID, recipientI
 
 	var commentArg interface{}
 	if commentID == nil {
-		commentArg = nil // Insert NULL for comment_id
+		commentArg = nil
 	} else {
 		commentArg = *commentID
 	}
@@ -59,8 +54,6 @@ func (m *NotificationsModel) Insert(notificationType string, actorID, recipientI
 	return int(id), nil
 }
 
-// GetAllByRecipient fetches all notifications for a given user.
-// You might want ORDER BY created_at DESC or filter unread only, etc.
 func (m *NotificationsModel) GetAllByRecipient(userID int) ([]*Notifications, error) {
 	stmt := `
         SELECT 
@@ -78,7 +71,7 @@ func (m *NotificationsModel) GetAllByRecipient(userID int) ([]*Notifications, er
 	var notifications []*Notifications
 	for rows.Next() {
 		n := &Notifications{
-			Comment_ID: sql.NullInt64{}, // by default
+			Comment_ID: sql.NullInt64{}, 
 		}
 		err := rows.Scan(
 			&n.ID,

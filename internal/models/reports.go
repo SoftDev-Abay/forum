@@ -47,7 +47,7 @@ func (m *ReportsModel) Get(reportID int) (*Reports, error) {
 		&r.DateCreated,
 	)
 	if err == sql.ErrNoRows {
-		return nil, ErrNoRecord // define your custom error
+		return nil, ErrNoRecord 
 	} else if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,6 @@ func (m *ReportsModel) UpdateAdminResponse(reportID, adminID int, adminResponse 
 		return err
 	}
 	if rowsAffected == 0 {
-		// Could return a custom error if no matching row
 		return fmt.Errorf("no report found with id = %d", reportID)
 	}
 	return nil
@@ -130,7 +129,6 @@ func (m *ReportsModel) DeleteReportByID(reportID int) error {
 		return err
 	}
 	if rowsAffected == 0 {
-		// Optionally return a custom error if the report isn't found
 		return fmt.Errorf("no report found with id = %d", reportID)
 	}
 	return nil

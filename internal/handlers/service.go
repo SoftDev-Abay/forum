@@ -49,8 +49,8 @@ func NewApp(
 	comments *models.CommentsModel,
 	commentsReactions *models.CommentsReactionsModel,
 	promotionRequests *models.PromotionRequestsModel,
-	reports *models.ReportsModel, // <-- ADD THIS
-	reportReasons *models.ReportReasonsModel, // <-- AND THIS
+	reports *models.ReportsModel, 
+	reportReasons *models.ReportReasonsModel, 
 	googleClientID string,
 	googleClientSecret string,
 	gitHubClientID string,
@@ -69,8 +69,8 @@ func NewApp(
 		Comments:          comments,
 		CommentsReactions: commentsReactions,
 		PromotionRequests: promotionRequests,
-		Reports:           reports,       // <-- SET HERE
-		ReportReasons:     reportReasons, // <-- SET HERE
+		Reports:           reports,       
+		ReportReasons:     reportReasons, 
 
 		GoogleClientID:     googleClientID,
 		GoogleClientSecret: googleClientSecret,

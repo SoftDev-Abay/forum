@@ -53,7 +53,6 @@ func (app *Application) promotionRequestCreatePost(w http.ResponseWriter, r *htt
 		return
 	}
 
-	// Insert with status as "pending"
 	_, err = app.PromotionRequests.Insert(userID, description, "pending")
 	if err != nil {
 		app.serverError(w, r, err)
