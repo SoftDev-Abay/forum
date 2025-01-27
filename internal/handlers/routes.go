@@ -44,9 +44,9 @@ func (app *Application) Routes() http.Handler {
 	mux.Handle("/user/notifications", app.loginMiddware(http.HandlerFunc(app.notificationsPage)))
 
 	mux.HandleFunc("/register", app.register)
-	mux.HandleFunc("/register/post", app.registerPost)
+	mux.HandleFunc("/register/post", app.RegisterPost)
 	mux.HandleFunc("/login", app.login)
-	mux.HandleFunc("/login/post", app.loginPost)
+	mux.HandleFunc("/login/post", app.LoginPost)
 	mux.HandleFunc("/logout", app.logout)
 	// external authentication
 	mux.HandleFunc("/auth/google", app.googleLogin)

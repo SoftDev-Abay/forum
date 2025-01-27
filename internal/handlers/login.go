@@ -37,7 +37,7 @@ func (app *Application) login(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, http.StatusOK, "login.html", data)
 }
 
-func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
+func (app *Application) LoginPost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		app.clientError(w, r, http.StatusMethodNotAllowed)
 		return
@@ -99,14 +99,23 @@ func (app *Application) loginPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	existingToken, err := app.Session.GetByUserId(user.ID)
-
-	if existingToken != nil {
-		app.Session.DeleteByUserId(user.ID)
-	}
-
-	if errors.Is(err, models.ErrNoRecord) {
+	if err != nil {
+		// If there's a real error
+		if errors.Is(err, models.ErrNoRecord) {
+			// No session found, do nothing
+		} else {
+			// Some unexpected error
+			app.serverError(w, r, err)
+			return
+		}
 	} else {
-		app.serverError(w, r, err)
+		// err == nil
+		if existingToken != nil {
+			// There's an existing session for this user
+			// remove it so we create a fresh one
+			app.Session.DeleteByUserId(user.ID)
+			// handle any error from DeleteByUserId if needed
+		}
 	}
 
 	token, err := GenerateToken()

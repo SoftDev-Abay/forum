@@ -27,7 +27,7 @@ func (app *Application) register(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, http.StatusOK, "register.html", data)
 }
 
-func (app *Application) registerPost(w http.ResponseWriter, r *http.Request) {
+func (app *Application) RegisterPost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		app.clientError(w, r, http.StatusMethodNotAllowed)
 		return
