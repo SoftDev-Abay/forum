@@ -2,6 +2,7 @@ package forum_advanced_test
 
 import (
 	"fmt"
+	"github.com/xuri/excelize/v2"
 	"strings"
 	"testing"
 	"time"
@@ -10,7 +11,7 @@ import (
 )
 
 const (
-	driverPath   = "/home/student/forum/geckodriver"
+	driverPath   = "../geckodriver"
 	seleniumPort = 9515
 	baseURL      = "https://localhost:8433"
 )
@@ -181,4 +182,40 @@ func TestLoginLogout(t *testing.T) {
 	} else {
 		t.Log("Logout successful: Found 'Login' link post-logout.")
 	}
+}
+
+type UserData struct {
+	Email    string
+	Username string
+	Password string
+}
+
+func readUsersFromExcel(filename string) ([]UserData, error) {
+	f, err := excelize.OpenFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	rows, err := f.GetRows("Users")
+	if err != nil {
+		return nil, err
+	}
+
+	var users []UserData
+	for i, row := range rows {
+		if i == 0 { // skip header row
+			continue
+		}
+		if len(row) < 3 {
+			continue
+		}
+		user := UserData{
+			Email:    row[0],
+			Username: row[1],
+			Password: row[2],
+		}
+		users = append(users, user)
+	}
+	return users, nil
 }
