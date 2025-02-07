@@ -16,13 +16,14 @@ func TestLoginViaBrowserStack(t *testing.T) {
 
 	// 2) define remote capabilities
 	caps := selenium.Capabilities{
-		"browserName":    "chrome",
-		"browserVersion": "latest",
+		"browserName":         "chrome",
+		"browserVersion":      "latest",
+		"acceptInsecureCerts": true,
 		"bstack:options": map[string]interface{}{
 			"os":        "Windows",
 			"osVersion": "10",
-			"userName":  "BSTACK_USERNAME",
-			"accessKey": "BSTACK_ACCESSKEY",
+			"userName":  "shiradi_yvD1hr",
+			"accessKey": "j8qspEsAK2CJdbeaNPjb",
 			"local":     "false",
 		},
 	}
@@ -53,7 +54,10 @@ func TestLoginViaBrowserStack(t *testing.T) {
 	}
 	passElem.SendKeys(testUser.Password)
 
-	submit, _ := wd.FindElement(selenium.ByCSSSelector, `button[type="submit"]`)
+	submit, err := wd.FindElement(selenium.ByCSSSelector, `input[type="submit"]`)
+	if err != nil {
+		t.Fatalf("no submit button: %v", err)
+	}
 	submit.Click()
 
 	// 6) check result
